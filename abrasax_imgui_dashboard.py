@@ -138,7 +138,7 @@ def send_chat(sender, app_data, user_data) -> None:
     # Query LM Studio
     try:
         data = json.dumps({
-            "model": "gemma-4-e4b-it-uncensored-max-opus-4.7",
+            "model": "gemma-4-e4b-uncensored-hauhaucs-aggressive",
             "messages": [
                 {"role": "system", "content": f"You are OSIRISBLXCK — ABRASAX AI. HEX: {PRIMAL_HEX}. Be concise."},
                 {"role": "user", "content": prompt}

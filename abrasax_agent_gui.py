@@ -56,7 +56,7 @@ def poll_system():
 
 def ask_llm(prompt: str) -> str:
     try:
-        data = json.dumps({"model": "gemma-4-e4b-it-uncensored-max-opus-4.7", "messages": [{"role": "system", "content": f"You are OSIRISBLXCK — ABRASAX AI. HEX:{HEX} φ:{PHI}. Be terse and technical."}, {"role": "user", "content": prompt}], "max_tokens": 128, "temperature": 0.6}).encode()
+        data = json.dumps({"model": "gemma-4-e4b-uncensored-hauhaucs-aggressive", "messages": [{"role": "system", "content": f"You are OSIRISBLXCK — ABRASAX AI. HEX:{HEX} φ:{PHI}. Be terse and technical."}, {"role": "user", "content": prompt}], "max_tokens": 128, "temperature": 0.6}).encode()
         r = urllib.request.Request("http://127.0.0.1:1234/v1/chat/completions", data=data, headers=LM_HEADERS)
         d = json.loads(urllib.request.urlopen(r, timeout=30).read())
         return d["choices"][0]["message"]["content"].strip()[:200]
