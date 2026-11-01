@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="100%" style="stop-color:#1a0a2e"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  
+  <rect width="900" height="500" fill="url(#bg)"/>
+  
+  <!-- Title -->
+  <text x="450" y="35" text-anchor="middle" fill="#00ffff" font-family="monospace" font-size="20" font-weight="bold" filter="url(#glow)">7D TRANSFORMER LAYER</text>
+  
+  <!-- Input -->
+  <rect x="400" y="55" width="100" height="30" fill="#222" stroke="#00ff00" rx="5"/>
+  <text x="450" y="75" text-anchor="middle" fill="#00ff00" font-family="monospace" font-size="10">Input x</text>
+  
+  <!-- Arrow down -->
+  <line x1="450" y1="85" x2="450" y2="105" stroke="#444" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <!-- RMSNorm 1 -->
+  <rect x="375" y="110" width="150" height="35" fill="#1a1a3a" stroke="#ff00ff" rx="5"/>
+  <text x="450" y="132" text-anchor="middle" fill="#ff00ff" font-family="monospace" font-size="11">RMSNorm (7D)</text>
+  
+  <!-- Arrow down -->
+  <line x1="450" y1="145" x2="450" y2="165" stroke="#444" stroke-width="2"/>
+  
+  <!-- Attention Block -->
+  <rect x="300" y="170" width="300" height="120" fill="#1a2a2a" stroke="#00ffff" rx="5"/>
+  <text x="450" y="190" text-anchor="middle" fill="#00ffff" font-family="monospace" font-size="12" font-weight="bold">Φ-Weighted Attention</text>
+  
+  <!-- Q K V inside attention -->
+  <rect x="315" y="200" width="50" height="25" fill="#333" stroke="#ff7700" rx="3"/>
+  <text x="340" y="217" text-anchor="middle" fill="#ff7700" font-family="monospace" font-size="9">Q</text>
+  
+  <rect x="375" y="200" width="50" height="25" fill="#333" stroke="#ff7700" rx="3"/>
+  <text x="400" y="217" text-anchor="middle" fill="#ff7700" font-family="monospace" font-size="9">K</text>
+  
+  <rect x="435" y="200" width="50" height="25" fill="#333" stroke="#ff7700" rx="3"/>
+  <text x="460" y="217" text-anchor="middle" fill="#ff7700" font-family="monospace" font-size="9">V</text>
+  
+  <!-- RoPE -->
+  <rect x="495" y="200" width="90" height="25" fill="#333" stroke="#ffff00" rx="3"/>
+  <text x="540" y="217" text-anchor="middle" fill="#ffff00" font-family="monospace" font-size="9">RoPE (7D)</text>
+  
+  <!-- Score computation -->
+  <rect x="320" y="235" width="160" height="25" fill="#222" stroke="#00ff00" rx="3"/>
+  <text x="400" y="252" text-anchor="middle" fill="#00ff00" font-family="monospace" font-size="9">Φ-Weighted Dot Product</text>
+  
+  <!-- Softmax -->
+  <rect x="490" y="235" width="100" height="25" fill="#222" stroke="#00ff00" rx="3"/>
+  <text x="540" y="252" text-anchor="middle" fill="#00ff00" font-family="monospace" font-size="9">Softmax</text>
+  
+  <!-- Output Proj -->
+  <rect x="375" y="265" width="150" height="20" fill="#222" stroke="#0077ff" rx="3"/>
+  <text x="450" y="279" text-anchor="middle" fill="#0077ff" font-family="monospace" font-size="9">Output Projection</text>
+  
+  <!-- Residual connection 1 -->
+  <path d="M 250 125 L 250 310 L 420 310" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="4"/>
+  <text x="260" y="220" fill="#666" font-family="monospace" font-size="8">residual</text>
+  
+  <!-- Add -->
+  <circle cx="450" cy="310" r="12" fill="#222" stroke="#00ffff"/>
+  <text x="450" y="314" text-anchor="middle" fill="#00ffff" font-family="monospace" font-size="12">+</text>
+  
+  <!-- Arrow down -->
+  <line x1="450" y1="322" x2="450" y2="342" stroke="#444" stroke-width="2"/>
+  
+  <!-- RMSNorm 2 -->
+  <rect x="375" y="347" width="150" height="35" fill="#1a1a3a" stroke="#ff00ff" rx="5"/>
+  <text x="450" y="369" text-anchor="middle" fill="#ff00ff" font-family="monospace" font-size="11">RMSNorm (7D)</text>
+  
+  <!-- Arrow down -->
+  <line x1="450" y1="382" x2="450" y2="402" stroke="#444" stroke-width="2"/>
+  
+  <!-- FFN Block -->
+  <rect x="325" y="407" width="250" height="55" fill="#2a1a2a" stroke="#ff00ff" rx="5"/>
+  <text x="450" y="427" text-anchor="middle" fill="#ff00ff" font-family="monospace" font-size="12" font-weight="bold">SwiGLU FFN (7D)</text>
+  <text x="450" y="450" text-anchor="middle" fill="#888" font-family="monospace" font-size="9">gate × up → Φ⁻¹ mod → down</text>
+  
+  <!-- Residual connection 2 -->
+  <path d="M 250 360 L 250 480 L 420 480" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="4"/>
+  
+  <!-- Add 2 -->
+  <circle cx="450" cy="480" r="12" fill="#222" stroke="#00ffff"/>
+  <text x="450" y="484" text-anchor="middle" fill="#00ffff" font-family="monospace" font-size="12">+</text>
+  
+  <!-- Legend -->
+  <rect x="700" y="100" width="180" height="200" fill="#111" stroke="#333" rx="5"/>
+  <text x="790" y="125" text-anchor="middle" fill="#fff" font-family="monospace" font-size="11" font-weight="bold">7D Extensions</text>
+  
+  <rect x="715" y="140" width="12" height="12" fill="#ff00ff"/>
+  <text x="735" y="150" fill="#888" font-family="monospace" font-size="9">S² Stability</text>
+  
+  <rect x="715" y="160" width="12" height="12" fill="#00ffff"/>
+  <text x="735" y="170" fill="#888" font-family="monospace" font-size="9">Φ Weighting</text>
+  
+  <rect x="715" y="180" width="12" height="12" fill="#ffff00"/>
+  <text x="735" y="190" fill="#888" font-family="monospace" font-size="9">7D RoPE</text>
+  
+  <rect x="715" y="200" width="12" height="12" fill="#00ff00"/>
+  <text x="735" y="210" fill="#888" font-family="monospace" font-size="9">Manifold Proj</text>
+  
+  <text x="710" y="240" fill="#666" font-family="monospace" font-size="8">First 7 dims:</text>
+  <text x="710" y="255" fill="#666" font-family="monospace" font-size="8">weight[i] = Φⁱ/Φ⁶</text>
+  
+  <text x="710" y="280" fill="#666" font-family="monospace" font-size="8">S² bound: 0.01</text>
+  
+  <!-- Footer -->
+  <text x="450" y="495" text-anchor="middle" fill="#444" font-family="monospace" font-size="9">Sir Charles Spikes | December 24, 2025</text>
+</svg>

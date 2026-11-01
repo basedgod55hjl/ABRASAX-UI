@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>ABRASAX · Console</title>
+<meta name="description" content="ABRASAX unified console: synaptic field, 7-D brain map, constraints, actuation, models and services in one live view">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2308080d'/%3E%3Cpath d='M32 11 53 45H11z' fill='none' stroke='%237c6cf0' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="console.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1>ABRASAX</h1>
+    <span class="hex">4f5349524953424c58434b</span>
+    <span class="sub">console</span>
+  </div>
+  <span class="spacer"></span>
+  <span class="stat">tick <b id="poll-count">0</b></span>
+  <span class="stat">last <b id="last-tick">—</b></span>
+  <button type="button" class="btn" id="refresh">Refresh</button>
+</header>
+
+<main class="grid">
+
+  <!-- 1. synaptic field (:9001) -->
+  <section class="card">
+    <h2><span class="dot" id="syn-dot"></span>synaptic field
+      <span class="pill" id="fresh-syn">—</span></h2>
+    <div class="big"><span id="syn-nodes">—</span><small>nodes</small></div>
+    <div class="row"><span class="k">steps</span><span class="val" id="syn-steps">—</span></div>
+    <div class="row"><span class="k">backend</span><span class="val" id="syn-backend">—</span></div>
+    <div class="row"><span class="k">mean state</span><span class="val" id="syn-mean">—</span></div>
+    <div class="row"><span class="k">synapses</span><span class="val" id="syn-edges">—</span></div>
+    <div class="row"><span class="k">reciprocal</span><span class="val" id="syn-recip">—</span></div>
+    <div class="row"><span class="k">inhibitory</span><span class="val" id="syn-inhib">—</span></div>
+    <div class="row"><span class="k">modulator</span><span class="val" id="syn-mod">—</span></div>
+    <div class="row"><span class="k">primal seal</span><span class="val" id="syn-seal">—</span></div>
+  </section>
+
+  <!-- 2. flywire connectome reference -->
+  <section class="card">
+    <h2><span class="dot ok"></span>flywire reference
+      <span class="pill ok">static</span></h2>
+    <div class="big"><span id="fly-neurons">—</span><small>neurons</small></div>
+    <div class="row"><span class="k">synapses</span><span class="val" id="fly-synapses">—</span></div>
+    <div class="row"><span class="k">neuropils</span><span class="val" id="fly-neuropils">—</span></div>
+    <div class="note">FlyWire v783 / Zenodo 10.5281/zenodo.10676866 (CC-BY-4.0).
+      Reference connectome the synaptic field is shaped after.</div>
+  </section>
+
+  <!-- 3. 7-D brain map (:8791) -->
+  <section class="card">
+    <h2><span class="dot" id="bx-dot"></span>7-D brain map
+      <span class="pill" id="fresh-brain">—</span></h2>
+    <div class="big"><span id="bx-units">—</span><small>units</small></div>
+    <div class="row"><span class="k">classes</span><span class="val" id="bx-classes">—</span></div>
+    <div class="row"><span class="k">tension</span><span class="val" id="bx-tension">—</span></div>
+    <div class="row"><span class="k">radial spread</span><span class="val" id="bx-spread">—</span></div>
+    <div class="row"><span class="k">kernel</span><span class="val" id="bx-device">—</span></div>
+  </section>
+
+  <!-- 4. frequency DNA + learning -->
+  <section class="card">
+    <h2><span class="dot ok"></span>frequency dna
+      <span class="pill" id="fresh-brain2">—</span></h2>
+    <div class="big"><span id="dna-bases">—</span><small>gen <span id="dna-gen">—</span></small></div>
+    <div class="row"><span class="k">seed</span><span class="val" id="dna-seed">—</span></div>
+    <div class="row"><span class="k">lineage</span><span class="val" id="dna-mut">—</span></div>
+    <div class="row"><span class="k">learn steps</span><span class="val" id="lrn-steps">—</span></div>
+    <div class="row"><span class="k">mse ema</span><span class="val" id="lrn-mse">—</span></div>
+    <div class="row"><span class="k">gain[0]</span><span class="val" id="lrn-gain">—</span></div>
+  </section>
+
+  <!-- dual GPU -->
+  <section class="card" style="grid-column: span 2; min-width:0">
+    <h2><span class="dot" id="gpu-dot"></span>gpus · amd + nvidia
+      <span class="pill" id="fresh-gpu">—</span></h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div class="gtitle">NVIDIA</div>
+        <div class="big"><span id="nv-util">—</span><small>util %</small></div>
+        <div class="row"><span class="k">name</span><span class="val" id="nv-name">—</span></div>
+        <div class="row"><span class="k">temp</span><span class="val" id="nv-temp">—</span></div>
+        <div class="row"><span class="k">sm clock</span><span class="val" id="nv-sm">—</span></div>
+        <div class="row"><span class="k">vram</span><span class="val" id="nv-vram">—</span></div>
+        <div class="row"><span class="k">pcie</span><span class="val" id="nv-pcie">—</span></div>
+        <div class="row"><span class="k">enc / dec</span><span class="val" id="nv-eng">—</span></div>
+        <div class="row"><span class="k">power</span><span class="val" id="nv-pwr">—</span></div>
+      </div>
+      <div>
+        <div class="gtitle">AMD</div>
+        <div class="big"><span id="amd-mode">—</span><small>display</small></div>
+        <div class="row"><span class="k">name</span><span class="val" id="amd-name">—</span></div>
+        <div class="row"><span class="k">driver</span><span class="val" id="amd-drv">—</span></div>
+        <div class="row"><span class="k">refresh</span><span class="val" id="amd-hz">—</span></div>
+        <div class="row"><span class="k">counters</span><span class="val" id="amd-ctr">—</span></div>
+        <div class="note" id="amd-note">—</div>
+      </div>
+    </div>
+    <div class="note">GPU compute processes</div>
+    <div id="gpu-procs" class="procs"><div class="empty">—</div></div>
+  </section>
+
+  <!-- aria2 downloads -->
+  <section class="card" style="grid-column: span 2; min-width:0">
+    <h2><span class="dot" id="dl-dot"></span>aria2 downloads
+      <span class="pill" id="fresh-dl">—</span>
+      <span class="stat" id="dl-ver" style="margin-left:auto"></span></h2>
+    <div class="dlrow">
+      <input type="text" id="dl-url" placeholder="https://…  (http/https/ftp/magnet)"
+             aria-label="Download URL">
+      <input type="number" id="dl-cap" value="64" min="1" max="4096"
+             title="Cap in MiB" aria-label="Cap MiB" class="cap">
+      <button type="button" class="btn" id="dl-go">Fetch</button>
+    </div>
+    <div id="dl-out" class="dlout"></div>
+    <div id="dl-rows" class="procs"><div class="empty">no downloads</div></div>
+    <div class="note">Byte-capped per job (default 512 MiB), destination confined to
+      C:\ABRASAX\DOWNLOADS, schemes limited to http/https/ftp/magnet.
+      Every job is audited to LOGS/aria2_jobs.jsonl.</div>
+  </section>
+
+  <!-- 5. unit table -->
+  <section class="card" style="grid-column: span 2; min-width:0">
+    <h2><span class="dot ok"></span>top movers
+      <span class="pill" id="fresh-brain3">—</span></h2>
+    <table>
+      <thead><tr><th>kind</th><th>unit</th><th class="num">norm</th><th class="num">velocity</th></tr></thead>
+      <tbody id="unit-rows"><tr><td colspan="4" class="empty">waiting…</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- 6. constraints -->
+  <section class="card">
+    <h2><span class="dot ok"></span>constraints
+      <span class="pill" id="fresh-stress">—</span></h2>
+    <div class="row"><span class="k">state</span><span class="val" id="stress-state">—</span></div>
+    <div id="rule-rows"><div class="empty">no data</div></div>
+  </section>
+
+  <!-- 7. actuation -->
+  <section class="card">
+    <h2><span class="dot ok"></span>actuate
+      <span class="pill" id="fresh-actions">—</span></h2>
+    <div id="act-rows"><div class="empty">no actions</div></div>
+    <div class="note">Mutations require ticking "apply" and confirming.
+      Every attempt is audited to LOGS/brain_actions.jsonl.</div>
+  </section>
+
+  <!-- 8. models -->
+  <section class="card">
+    <h2><span class="dot ok"></span>models
+      <span class="pill" id="fresh-models">—</span></h2>
+    <div class="row"><span class="k">roster</span><span class="val" id="model-count">—</span></div>
+    <div id="model-rows"><div class="empty">offline</div></div>
+  </section>
+
+  <!-- 9. services -->
+  <section class="card">
+    <h2><span class="dot ok"></span>services</h2>
+    <div id="svc-rows"><div class="empty">probing…</div></div>
+  </section>
+
+</main>
+
+<footer class="discbar">
+  <a href="/api/disclaimer" target="_blank" rel="noopener">Disclaimer &amp; licensing</a>
+  <span>·</span>
+  <span><b>This program comes with no warranty. You must use this program at your own risk.</b></span>
+  <span>·</span>
+  <span>localhost-only, no auth · actuation and downloads are live and audited</span>
+</footer>
+
+<script src="console.js"></script>
+</body>
+</html>

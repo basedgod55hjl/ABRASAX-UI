@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>ABRASAX · Unified</title>
+<meta name="description" content="Live ABRASAX Unified Compute mission control: GPU frames, NVIDIA telemetry, math jobs and CPU pool over the ABXU bridge on 127.0.0.1:8791">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2308080d'/%3E%3Cpath d='M32 11 53 45H11z' fill='none' stroke='%237c6cf0' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="unified.css">
+<link rel="stylesheet" href="brainmap.css">
+</head>
+<body class="ux-body">
+
+<header class="ux-top">
+  <div class="ux-brand">
+    <span class="ux-mark" aria-hidden="true">AB</span>
+    <div>
+      <h1 class="ux-title">ABRASAX <b>Unified</b></h1>
+      <p class="ux-sub">abxu runtime · gpu ipc · nvml telemetry · math kernels · cpu pool</p>
+    </div>
+  </div>
+
+  <div class="ux-top-right">
+    <span class="ux-conn" id="connBadge" data-state="wait" role="status" aria-live="polite">
+      <i class="dot" aria-hidden="true"></i><span id="connText">connecting</span>
+    </span>
+    <span class="ux-addr" id="bridgeAddr" title="HTTP bridge address">bridge <b>—</b></span>
+    <button type="button" class="ux-btn" id="retryBtn" title="Re-probe the bridge and runtime">Reconnect</button>
+    <a class="ux-btn" href="index.html" title="Back to the gateway chat">← gateway</a>
+  </div>
+</header>
+
+<main class="ux-grid">
+
+  <!-- 1. live GPU frame -->
+  <section class="ux-panel p-frame" aria-labelledby="frameTitle">
+    <div class="ux-ph">
+      <h2 id="frameTitle">GPU frame</h2>
+      <span class="tag">/api/stream</span>
+      <span class="spacer"></span>
+      <span class="meta">seq <b id="frameSeq">—</b> · <b id="frameFps">0.0</b> fps</span>
+    </div>
+    <div class="ux-panel-body">
+      <div class="ux-stage">
+        <canvas id="frameCanvas" width="320" height="240" aria-label="Live GPU-rendered frame"></canvas>
+        <div class="ux-stage-note" id="frameNote">
+          <strong id="frameNoteTitle">no frame yet</strong>
+          <span id="frameNoteSub">waiting for the runtime stream</span>
+        </div>
+      </div>
+      <div class="ux-frame-foot">
+        <span>res <b id="frameRes">—</b></span>
+        <span>fps <b id="frameFpsFoot">0.0</b></span>
+        <span>seq <b id="frameSeqFoot">—</b></span>
+        <span class="right">age <b id="frameAge">—</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. nvidia telemetry -->
+  <section class="ux-panel p-tele" aria-labelledby="teleTitle">
+    <div class="ux-ph">
+      <h2 id="teleTitle">NVIDIA telemetry</h2>
+      <span class="tag">1 Hz</span>
+      <span class="spacer"></span>
+      <span class="meta" id="teleStamp">—</span>
+    </div>
+    <div class="ux-panel-body">
+      <div class="ux-tele-head">
+        <span class="ux-gpu-name" id="gpuName">detecting GPU…</span>
+        <span class="ux-gpu-src" id="gpuSource">—</span>
+        <span class="ux-gpu-age" id="gpuAge">age —</span>
+      </div>
+
+      <div class="ux-gauges">
+        <div class="ux-gauge">
+          <div class="ux-gauge-label"><span>utilization</span><span class="sub" id="utilSub">—</span></div>
+          <div class="ux-ring">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <circle class="track" cx="50" cy="50" r="42" pathLength="100"></circle>
+              <circle class="val" id="utilRing" cx="50" cy="50" r="42" pathLength="100"
+                      stroke-dasharray="100" stroke-dashoffset="100"></circle>
+            </svg>
+            <div class="ux-ring-num"><b id="utilVal">—</b><span>percent</span></div>
+          </div>
+          <div class="ux-mini"><span>mem ctrl <b id="memUtil">—</b></span></div>
+        </div>
+
+        <div class="ux-gauge">
+          <div class="ux-gauge-label"><span>temperature</span><span class="sub" id="tempSub">—</span></div>
+          <div class="ux-ring">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <circle class="track" cx="50" cy="50" r="42" pathLength="100"></circle>
+              <circle class="val" id="tempRing" cx="50" cy="50" r="42" pathLength="100"
+                      stroke-dasharray="100" stroke-dashoffset="100"></circle>
+            </svg>
+            <div class="ux-ring-num"><b id="tempVal">—</b><span>celsius</span></div>
+          </div>
+          <div class="ux-mini"><span>clocks <b id="clocksVal">—</b></span></div>
+        </div>
+
+        <div class="ux-gauge">
+          <div class="ux-gauge-label"><span>vram</span><span class="sub" id="vramSub">—</span></div>
+          <div class="ux-big" id="vramBig">—</div>
+          <div class="ux-bar" id="vramBar" data-tone="ok"><i style="width:0%"></i></div>
+          <div class="ux-mini"><span>free <b id="vramFree">—</b></span><span id="vramPct">—</span></div>
+        </div>
+
+        <div class="ux-gauge">
+          <div class="ux-gauge-label"><span>power draw</span><span class="sub">nvml</span></div>
+          <div class="ux-big" id="powerBig">—</div>
+          <div class="ux-bar" id="powerBar" data-tone="ok"><i style="width:0%"></i></div>
+          <div class="ux-mini"><span>source <b id="powerSrc">—</b></span><span id="powerBudget">—</span></div>
+        </div>
+      </div>
+
+      <figure class="ux-spark-wrap">
+        <figcaption><span>utilization · 60 s</span><b id="utilSparkVal">—</b></figcaption>
+        <canvas id="utilSpark" width="480" height="68" aria-label="GPU utilization history"></canvas>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 3. job console -->
+  <section class="ux-panel p-jobs" aria-labelledby="jobsTitle">
+    <div class="ux-ph">
+      <h2 id="jobsTitle">Job console</h2>
+      <span class="tag">POST /api/job</span>
+      <span class="spacer"></span>
+      <button type="button" class="ux-btn small" id="refreshJobs" title="Reload the job list from HELLO_ACK">refresh jobs</button>
+      <span class="meta" id="jobCount">0 jobs</span>
+    </div>
+    <div class="ux-panel-body">
+      <div class="ux-job-grid">
+        <div>
+          <div class="ux-field">
+            <label for="jobSelect">Kernel</label>
+            <select id="jobSelect" title="Job names advertised by the runtime">
+              <option value="">connecting…</option>
+            </select>
+            <span class="hint" id="jobHint">from HELLO_ACK</span>
+          </div>
+          <div class="ux-field" id="customJobField" hidden>
+            <label for="customJob">Custom job name</label>
+            <input id="customJob" type="text" spellcheck="false" autocomplete="off"
+                   placeholder="math.mobius_add">
+          </div>
+        </div>
+        <div class="ux-field">
+          <label for="jobArgs">Arguments (JSON object)</label>
+          <textarea id="jobArgs" spellcheck="false"
+                    aria-describedby="jobArgsHint">{ "a": 0.2, "b": 0.3 }</textarea>
+          <span class="hint" id="jobArgsHint">Ctrl+Enter runs · must be a JSON object</span>
+        </div>
+      </div>
+
+      <div class="ux-row">
+        <button type="button" class="ux-btn primary" id="runJob" disabled>Run job</button>
+        <button type="button" class="ux-btn" id="formatArgs" title="Pretty-print the JSON arguments">Format</button>
+        <span class="spacer"></span>
+        <span class="ux-chip" id="jobStatus" data-tone="idle">idle</span>
+        <span class="ux-chip" id="jobLatency">— ms</span>
+      </div>
+
+      <div class="ux-result">
+        <div class="ux-result-head">
+          <span>result</span>
+          <span class="spacer"></span>
+          <span id="resultMeta">JOB_RESULT</span>
+        </div>
+        <pre id="jobResult" class="empty">No job has run in this session.</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. cpu pool -->
+  <section class="ux-panel p-cpu" aria-labelledby="cpuTitle">
+    <div class="ux-ph">
+      <h2 id="cpuTitle">CPU pool</h2>
+      <span class="tag">host</span>
+      <span class="spacer"></span>
+      <span class="meta" id="cpuStamp">—</span>
+    </div>
+    <div class="ux-panel-body">
+      <div class="ux-cpu-top">
+        <div>
+          <div class="ux-cpu-pct" id="cpuPct">—<small>%</small></div>
+          <div class="ux-cpu-sub" id="cpuSub">cores —</div>
+        </div>
+        <div>
+          <div class="ux-coregrid" id="coreGrid" aria-hidden="true"></div>
+          <div class="ux-mini"><span>load <b id="cpuLoad">—</b></span><span>freq <b id="cpuFreq">—</b></span></div>
+        </div>
+      </div>
+
+      <div class="ux-bar" id="cpuBar" data-tone="ok"><i style="width:0%"></i></div>
+
+      <dl class="ux-kv">
+        <div><dt>logical</dt><dd id="coresLogical">—</dd></div>
+        <div><dt>physical</dt><dd id="coresPhysical">—</dd></div>
+        <div><dt>ram used</dt><dd id="ramUsed">—</dd></div>
+        <div><dt>ram free</dt><dd id="ramFree">—</dd></div>
+      </dl>
+      <div class="ux-bar" id="ramBar" data-tone="ok"><i style="width:0%"></i></div>
+
+      <div class="ux-pool">
+        <h3>pool + bridge counters</h3>
+        <div class="ux-pool-stats" id="poolStats">
+          <span>workers <b>—</b></span>
+          <span>pending <b>—</b></span>
+          <span>completed <b>—</b></span>
+        </div>
+        <p class="ux-note" id="poolNote">Runtime pool counters appear when the telemetry payload publishes them; bridge job counters are always live.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. health + event log -->
+  <section class="ux-panel p-health" aria-labelledby="healthTitle">
+    <div class="ux-ph">
+      <h2 id="healthTitle">Link health</h2>
+      <span class="tag">/api/health</span>
+      <span class="spacer"></span>
+      <span class="meta">bridge <b id="bridgeVer">—</b> · reconnects <b id="reconnectCount">0</b></span>
+    </div>
+    <div class="ux-panel-body">
+      <div class="ux-health-grid">
+        <div>
+          <div class="ux-health-state" id="healthState" data-state="wait">
+            <i class="dot" aria-hidden="true"></i>
+            <b id="healthText">checking</b>
+            <span id="healthAddr">—</span>
+          </div>
+          <dl class="ux-kv">
+            <div><dt>runtime version</dt><dd id="healthVersion">—</dd></div>
+            <div><dt>protocol</dt><dd id="healthProtocol">—</dd></div>
+            <div><dt>caps</dt><dd class="wrap" id="healthCaps">—</dd></div>
+            <div><dt>connected</dt><dd id="healthUptime">—</dd></div>
+            <div><dt>telemetry age</dt><dd id="healthTeleAge">—</dd></div>
+            <div><dt>frame age</dt><dd id="healthFrameAge">—</dd></div>
+            <div><dt>last error</dt><dd class="wrap" id="healthError">—</dd></div>
+          </dl>
+        </div>
+        <div>
+          <ol class="ux-log" id="eventLog" aria-label="Bridge event log" aria-live="polite"></ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABRASAX 7-D brain map -->
+  <section class="ux-panel bx-panel" aria-labelledby="bxTitle">
+    <div class="ux-ph">
+      <h2 id="bxTitle">7-D brain map</h2>
+      <span class="tag">/api/brain</span>
+      <span class="spacer"></span>
+      <span class="ux-conn" id="bxConn"><i class="dot" id="bxDot"></i><span id="bxState">connecting</span></span>
+      <button type="button" class="ux-btn" id="bxPause">Pause</button>
+    </div>
+    <div class="ux-panel-body bx-body">
+      <div class="bx-stage">
+        <canvas id="bxCanvas" aria-label="7-D brain map of every system unit"></canvas>
+        <div class="bx-hud" id="bxHud">waiting for the brain</div>
+        <span class="bx-deg" id="bxDeg" title="All nodes collapsed to one radius: the map carries no information">degenerate</span>
+        <div class="bx-legend">
+          <span><i style="background:#7c6cf0"></i>cpu-core</span>
+          <span><i style="background:#4fd1c5"></i>gpu</span>
+          <span><i style="background:#ffd479"></i>memory</span>
+          <span><i style="background:#8f8fb0"></i>disk</span>
+          <span><i style="background:#55d98a"></i>service</span>
+        </div>
+      </div>
+      <div class="bx-rail">
+        <div class="bx-card">
+          <h3>brain</h3>
+          <div class="bx-kv"><span>units mapped</span><b id="bxCount">—</b></div>
+          <div class="bx-kv"><span>radial spread</span><b id="bxSpread">—</b></div>
+          <div class="bx-kv"><span>kernel device</span><b id="bxDevice">—</b></div>
+          <div class="bx-kv"><span>samples</span><b id="bxSamples">—</b></div>
+          <div class="bx-kv"><span>tension</span><b id="bxTensionVal">—</b></div>
+          <div class="bx-tension"><i id="bxTensionFill"></i></div>
+        </div>
+        <div class="bx-card">
+          <h3>learning <span class="sub" id="bxLearnState">—</span></h3>
+          <div class="bx-kv"><span>steps</span><b id="bxLearnSteps">—</b></div>
+          <div class="bx-kv"><span>mse ema</span><b id="bxLearnMse">—</b></div>
+          <div class="bx-kv"><span>gain[0]</span><b id="bxLearnGain">—</b></div>
+        </div>
+
+        <div class="bx-card">
+          <h3>constraints <span id="bxStressOk" class="sub">—</span></h3>
+          <div id="bxRules"><div class="bx-empty">no stress data</div></div>
+        </div>
+        <div class="bx-card">
+          <h3>actuate <span class="sub" id="bxActState">read-only</span></h3>
+          <div id="bxActions"><div class="bx-empty">loading actions…</div></div>
+        </div>
+
+        <div class="bx-card">
+          <h3>bursts (top movers)</h3>
+          <div id="bxBursts"><div class="bx-empty">no movement yet</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="ux-foot">
+  <span>bridge <code id="footBridge">http://127.0.0.1:8791</code></span>
+  <span>runtime <code id="footRuntime">—</code></span>
+  <span>ABXU protocol v1</span>
+  <span class="spacer"></span>
+  <span id="footState">discovering…</span>
+</footer>
+
+<script src="unified.js" defer></script>
+<script src="brainmap.js"></script>
+</body>
+</html>
