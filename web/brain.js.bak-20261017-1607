@@ -1,0 +1,129 @@
+/* ABRASAX brain panel — live synaptic field (fly-connectome structure).
+ * Reads /brain/state + /brain/texture, posts /brain/step.
+ * Gateway :9001 proxies the brain; :9626 is the standalone fallback.
+ */
+(() => {
+  "use strict";
+
+  const GW = location.protocol === "file:" ? "http://127.0.0.1:9001" : "";
+  const CANDIDATES = ["http://127.0.0.1:9001", "http://127.0.0.1:9626"];
+  let base = null;
+  let timer = null;
+
+  const $ = (id) => document.getElementById(id);
+  const panel = $("brainPanel");
+  const canvas = $("brainCanvas");
+  const ctx = canvas ? canvas.getContext("2d") : null;
+
+  const fmt = (n) => (typeof n === "number" ? n.toLocaleString() : "—");
+
+  async function jget(path, ms = 6000) {
+    const bases = base ? [base, ...CANDIDATES.filter((b) => b !== base)] : CANDIDATES;
+    let lastErr;
+    for (const b of bases) {
+      try {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), ms);
+        const r = await fetch(b + path, { signal: ctl.signal, cache: "no-store" });
+        clearTimeout(t);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        base = b;
+        return await r.json();
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error("brain unreachable");
+  }
+
+  async function jpost(path, body, ms = 20000) {
+    const b = base || CANDIDATES[0];
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), ms);
+    const r = await fetch(b + path, {
+      method: "POST", signal: ctl.signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    clearTimeout(t);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  }
+
+  function draw(texture) {
+    if (!ctx || !texture || !texture.data) return;
+    const n = texture.size || 64;
+    const raw = atob(texture.data);
+    const img = ctx.createImageData(n, n);
+    for (let i = 0; i < n * n; i++) {
+      const v = raw.charCodeAt(i) & 0xff;
+      // violet → cyan ramp on near-black, matching the shell palette
+      img.data[i * 4 + 0] = Math.round(20 + v * 0.42);
+      img.data[i * 4 + 1] = Math.round(8 + v * 0.72);
+      img.data[i * 4 + 2] = Math.round(40 + v * 0.84);
+      img.data[i * 4 + 3] = 255;
+    }
+    const tmp = document.createElement("canvas");
+    tmp.width = n; tmp.height = n;
+    tmp.getContext("2d").putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(tmp, 0, 0, canvas.width, canvas.height);
+  }
+
+  function setText(id, v) { const el = $(id); if (el) el.textContent = v; }
+
+  async function refresh() {
+    try {
+      const [s, t] = await Promise.all([jget("/brain/state"), jget("/brain/texture")]);
+      const syn = s.synapses || {};
+      setText("brainDotState", "live");
+      const dot = $("brainDot"); if (dot) dot.className = "dot ok";
+      setText("brainBackend", s.backend || "—");
+      setText("brainSteps", fmt(s.steps));
+      setText("brainNodes", fmt(s.nodes));
+      setText("brainSynapses", fmt(syn.edges));
+      setText("brainRecip", syn.reciprocal_directed_frac != null ? syn.reciprocal_directed_frac.toFixed(3) : "—");
+      setText("brainInhib", syn.inhibitory_edge_frac != null ? syn.inhibitory_edge_frac.toFixed(3) : "—");
+      setText("brainHubs", syn.top_cell_frac_for_50pct_of_synapses != null ? syn.top_cell_frac_for_50pct_of_synapses.toFixed(3) : "—");
+      setText("brainMod", syn.modulator_total != null ? syn.modulator_total.toFixed(3) : "—");
+      setText("brainMean", s.mean_state != null ? s.mean_state.toFixed(4) : "—");
+      setText("brainSha", (s.grid_sha256 || "").slice(0, 12));
+      const fly = s.fly || {};
+      setText("flyNeurons", fmt(fly.neurons));
+      setText("flySynapses", fmt(fly.synapses));
+      setText("flyRecip", fly.reciprocal_directed_frac != null ? fly.reciprocal_directed_frac.toFixed(3) : "—");
+      setText("brainPersisted", s.persisted ? "persisted" : "unsaved");
+      draw(t);
+    } catch (e) {
+      const dot = $("brainDot"); if (dot) dot.className = "dot bad";
+      setText("brainDotState", "offline");
+      setText("brainError", String(e && e.message ? e.message : e));
+    }
+  }
+
+  async function step(n) {
+    const btn = $("brainStep" + n); if (btn) btn.disabled = true;
+    try { await jpost("/brain/step", { n, learn: true }); await refresh(); }
+    catch (e) { setText("brainError", String(e && e.message ? e.message : e)); }
+    finally { if (btn) btn.disabled = false; }
+  }
+
+  function open() {
+    panel.hidden = false;
+    refresh();
+    if (!timer) timer = setInterval(refresh, 5000);
+  }
+  function close() {
+    panel.hidden = true;
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggle = $("toggleBrain");
+    if (toggle) toggle.addEventListener("click", () => (panel.hidden ? open() : close()));
+    const closeBtn = $("brainClose"); if (closeBtn) closeBtn.addEventListener("click", close);
+    const s1 = $("brainStep1"); if (s1) s1.addEventListener("click", () => step(1));
+    const s25 = $("brainStep25"); if (s25) s25.addEventListener("click", () => step(25));
+    const rf = $("brainRefresh"); if (rf) rf.addEventListener("click", refresh);
+    refresh(); // warm the dot even when the panel is closed
+  });
+})();

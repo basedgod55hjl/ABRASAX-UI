@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>ABRASAX · Gateway Chat</title>
+<meta name="description" content="Single-page chat client for the ABRASAX gateway on 127.0.0.1:9001">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2308080d'/%3E%3Cpath d='M32 11 53 45H11z' fill='none' stroke='%237c6cf0' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="brain.css">
+</head>
+<body>
+
+<a class="skip-link" href="#input">Skip to composer</a>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-name">ABRASAX</span>
+    <span class="brand-hex">4f5349524953424c58434b</span>
+    <span class="brand-sub">gateway chat</span>
+  </div>
+
+  <div class="controls" role="group" aria-label="Route and model">
+    <label class="field">
+      <span class="field-label">Route</span>
+      <select id="route" title="Provider route sent as abrasax.route">
+        <option value="auto" selected>auto</option>
+        <option value="lmstudio">lmstudio</option>
+        <option value="nvidia">nvidia</option>
+        <option value="xpl">xpl</option>
+      </select>
+    </label>
+
+    <label class="field grow">
+      <span class="field-label">Model</span>
+      <select id="model" title="Populated from GET /v1/models">
+        <option value="">loading models…</option>
+      </select>
+    </label>
+
+    <button type="button" id="refreshModels" class="btn ghost" title="Reload GET /v1/models" aria-label="Reload models">↻</button>
+    <button type="button" id="clearChat" class="btn ghost" title="Clear this conversation">Clear</button>
+    <button type="button" id="toggleBrain" class="btn ghost" title="Live synaptic brain (fly connectome)"
+            aria-controls="brainPanel" aria-expanded="false">Brain</button>
+    <a class="btn ghost" href="unified.html" title="ABRASAX Unified — GPU frames, NVIDIA telemetry, math jobs, CPU pool"
+       style="text-decoration:none">Unified</a>
+  </div>
+</header>
+
+<section class="telemetry" id="telemetry" role="status" aria-live="polite" aria-atomic="true" aria-label="Gateway telemetry">
+  <span class="dot checking" id="healthDot" aria-hidden="true"></span>
+  <span class="tele" id="healthStatus">checking gateway…</span>
+  <span class="tele-sep" aria-hidden="true">/</span>
+  <span class="tele" id="healthVersion">version —</span>
+  <span class="tele-sep" aria-hidden="true">/</span>
+  <span class="tele">latency <span id="healthLatency" class="num">—</span></span>
+  <span class="tele-sep" aria-hidden="true">/</span>
+  <span class="tele" id="healthChecked">last check —</span>
+  <span class="tele-detail" id="healthDetail"></span>
+</section>
+
+<div class="banner" id="offlineBanner" role="status" aria-live="assertive" hidden>gateway offline — retrying every 10 s</div>
+
+<main class="messages" id="messages" aria-live="polite" aria-relevant="additions" aria-label="Conversation">
+  <div class="intro" id="intro">
+    <div class="intro-hex">4f5349524953424c58434b</div>
+    <h1>ABRASAX gateway chat</h1>
+    <p>Talks straight to <code id="gatewayLabel">http://127.0.0.1:9001</code> using the OpenAI chat shape.
+       Pick a route, pick a model, send a message.</p>
+    <ul class="intro-facts">
+      <li><span>models</span> GET <code>/v1/models</code></li>
+      <li><span>chat</span> POST <code>/v1/chat/completions</code></li>
+      <li><span>health</span> GET <code>/health</code> every 10 s</li>
+    </ul>
+  </div>
+</main>
+
+<footer class="composer">
+  <form id="chatForm" autocomplete="off">
+    <textarea id="input" rows="1" placeholder="Message ABRASAX…" title="Enter to send · Shift+Enter for newline"
+              aria-label="Message ABRASAX" autofocus></textarea>
+    <button type="submit" id="send" class="btn send">Send</button>
+    <button type="button" id="stop" class="btn stop" title="Stop the in-flight request (Esc)">Stop</button>
+  </form>
+  <div class="composer-meta">
+    <span id="statusLine" role="status" aria-live="polite">ready</span>
+    <span class="composer-endpoint" id="endpointLabel">http://127.0.0.1:9001</span>
+  </div>
+</footer>
+
+<section class="brain-panel" id="brainPanel" hidden aria-label="Synaptic brain telemetry">
+  <div class="brain-head">
+    <span class="dot checking" id="brainDot" aria-hidden="true"></span>
+    <strong>synaptic field</strong>
+    <span class="brain-sub">FlyWire v783 · <span id="brainDotState">connecting</span> · <span id="brainPersisted">—</span></span>
+    <span class="brain-spacer"></span>
+    <button type="button" class="btn ghost" id="brainStep1" title="Advance one step">step 1</button>
+    <button type="button" class="btn ghost" id="brainStep25" title="Advance 25 steps">step 25</button>
+    <button type="button" class="btn ghost" id="brainRefresh" title="Refresh now" aria-label="Refresh brain state">↻</button>
+    <button type="button" class="btn ghost" id="brainClose" title="Hide panel" aria-label="Hide brain panel">×</button>
+  </div>
+
+  <div class="brain-body">
+    <div class="brain-left">
+      <canvas id="brainCanvas" width="256" height="256" role="img"
+              aria-label="64 by 64 synaptic field heatmap, violet to cyan on near-black"></canvas>
+
+      <figure class="brain-spark">
+        <figcaption>
+          <span class="brain-spark-label">mean_state</span>
+          <span class="brain-spark-value num" id="brainSparkVal">—</span>
+        </figcaption>
+        <canvas id="brainSpark" width="240" height="34" role="img"
+                aria-label="mean_state over the last 60 samples"></canvas>
+        <div class="brain-spark-foot">
+          <span>60 samples</span>
+          <span class="num" id="brainSparkRange">min — · max —</span>
+        </div>
+      </figure>
+    </div>
+
+    <dl class="brain-stats">
+      <div><dt>backend</dt><dd id="brainBackend">—</dd></div>
+      <div><dt>steps</dt><dd id="brainSteps" class="num">—</dd></div>
+      <div><dt>nodes</dt><dd id="brainNodes" class="num">—</dd></div>
+      <div><dt>synapses</dt><dd id="brainSynapses" class="num">—</dd></div>
+      <div><dt>reciprocal</dt><dd id="brainRecip" class="num">—</dd></div>
+      <div><dt>inhibitory</dt><dd id="brainInhib" class="num">—</dd></div>
+      <div><dt>hubs→50%</dt><dd id="brainHubs" class="num">—</dd></div>
+      <div><dt>modulator</dt><dd id="brainMod" class="num">—</dd></div>
+      <div><dt>mean state</dt><dd id="brainMean" class="num">—</dd></div>
+      <div><dt>grid sha</dt><dd id="brainSha" class="num">—</dd></div>
+    </dl>
+  </div>
+
+  <div class="brain-fly" aria-label="Fly connectome reference values">
+    <span class="brain-fly-tag">fly ref</span>
+    <span class="brain-fly-cell"><b id="flyNeurons" class="num">139,255</b> neurons</span>
+    <span class="brain-fly-cell"><b id="flySynapses" class="num">54.5M</b> synapses</span>
+    <span class="brain-fly-cell"><b id="flyRecip" class="num">0.266</b> recip</span>
+    <span class="brain-fly-note">FlyWire v783 · CC-BY-4.0</span>
+  </div>
+
+  <div class="brain-meter" aria-label="Gateway host metrics">
+    <span class="brain-meter-cell"><i>vram</i><b id="brainVram" class="num">—</b></span>
+    <span class="brain-meter-cell"><i>disk</i><b id="brainDisk" class="num">—</b></span>
+    <span class="brain-meter-cell"><i>uptime</i><b id="brainUptime" class="num">—</b></span>
+    <span class="brain-meter-src">:9001/metrics</span>
+  </div>
+
+  <div class="brain-error" id="brainError" role="status"></div>
+</section>
+
+<noscript><p class="banner">this client needs JavaScript; the gateway itself is reachable at <code>http://127.0.0.1:9001</code>.</p></noscript>
+
+<script src="app.js" defer></script>
+<script src="brain.js" defer></script>
+</body>
+</html>

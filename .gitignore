@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+node_modules/
+.venv/
+logs/
+*.log
+memory/*.db
+memory/*.db-wal
+memory/*.db-shm
+.env

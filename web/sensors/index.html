@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#08080d">
+<title>ABRASAX · S25 sensor bridge</title>
+<meta name="description" content="Galaxy S25 Ultra sensor capture client for the ABRASAX /v1/sensors gateway">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src http: https:; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2308080d'/%3E%3Cpath d='M32 11 53 45H11z' fill='none' stroke='%237c6cf0' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="sensors.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to controls</a>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-name">ABRASAX</span>
+    <span class="brand-hex">53454e534f5253</span>
+    <span class="brand-sub">S25 sensor bridge</span>
+  </div>
+  <div class="topbar-right">
+    <span class="badge" id="modeBadge" data-mode="idle">IDLE</span>
+    <span class="dot" id="connectionDot" data-state="idle" aria-hidden="true"></span>
+    <span class="conn" id="connectionState" role="status" aria-live="polite">not connected</span>
+  </div>
+</header>
+
+<div class="banner warn" id="insecureBanner" hidden role="alert">
+  This page is not a secure context. Android browsers may block motion and
+  magnetometer events over plain <code>http://</code>. See
+  <code>DOC/SENSORS-S25.md</code> for HTTPS and
+  <code>adb reverse</code> options. The Termux forwarder is unaffected.
+</div>
+
+<main id="main" class="layout">
+
+  <section class="panel" aria-labelledby="h-gateway">
+    <h2 id="h-gateway">Gateway</h2>
+    <p class="hint">The ABRASAX gateway origin, not this page's origin. The page is
+      served from the UI port; samples go to the gateway port (usually 9001).</p>
+
+    <label class="field">
+      <span class="field-label">Base URL</span>
+      <input id="baseUrl" type="url" inputmode="url" spellcheck="false"
+             autocomplete="off" placeholder="http://192.168.1.20:9001"
+             value="http://127.0.0.1:9001">
+    </label>
+
+    <label class="field">
+      <span class="field-label">Gateway token</span>
+      <input id="token" type="password" spellcheck="false" autocomplete="off"
+             placeholder="ABRASAX_GATEWAY_TOKEN (optional)">
+    </label>
+
+    <div class="row">
+      <button type="button" id="connectBtn" class="btn primary">Connect</button>
+      <button type="button" id="disconnectBtn" class="btn ghost" disabled>Disconnect</button>
+      <button type="button" id="refreshStateBtn" class="btn ghost" title="GET /v1/sensors/state">Refresh state</button>
+    </div>
+
+    <p class="note">The token is kept in <strong>sessionStorage</strong> only and is
+      sent solely as <code>Authorization: Bearer …</code>. It is never written to
+      localStorage, the URL, or the event log.</p>
+
+    <dl class="kv">
+      <div><dt>last HTTP</dt><dd id="lastHttp" class="num">—</dd></div>
+      <div><dt>last error</dt><dd id="lastError" class="err">—</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel" aria-labelledby="h-capture">
+    <h2 id="h-capture">Capture</h2>
+
+    <p class="hint">iOS requires a user gesture before motion events start.
+      Grant permission with the button first; Android grants on first use.</p>
+
+    <div class="row">
+      <button type="button" id="permissionBtn" class="btn">Allow motion + orientation</button>
+      <button type="button" id="magnetometerBtn" class="btn">Enable magnetometer</button>
+    </div>
+    <p class="note" id="permissionStatus">permission: not requested</p>
+
+    <div class="row">
+      <button type="button" id="startBtn" class="btn primary">Start streaming</button>
+      <button type="button" id="stopBtn" class="btn ghost" disabled>Stop</button>
+      <button type="button" id="sendOnceBtn" class="btn ghost" disabled>Send one sample</button>
+    </div>
+
+    <div class="row sim-row">
+      <button type="button" id="simulateBtn" class="btn sim">Simulate</button>
+      <button type="button" id="stopSimBtn" class="btn ghost" disabled>Stop simulation</button>
+    </div>
+    <p class="note sim-note">Simulation generates synthetic samples on this device and
+      labels them <code>rf_fingerprint = "sim-web"</code>. It never reads a sensor.
+      Use it to verify the page and the gateway without a phone.</p>
+
+    <div class="grid2">
+      <label class="field">
+        <span class="field-label">Sample rate (Hz)</span>
+        <input id="sampleHz" type="number" min="1" max="60" step="1" value="10">
+      </label>
+      <label class="field">
+        <span class="field-label">Samples per batch</span>
+        <input id="batchSize" type="number" min="1" max="256" step="1" value="20">
+      </label>
+    </div>
+
+    <label class="check">
+      <input id="learnToggle" type="checkbox">
+      <span>Send <code>learn: true</code> (gateway may adapt its state)</span>
+    </label>
+
+    <h3>Sensor availability</h3>
+    <ul id="sensorAvailability" class="availability">
+      <li class="pending">probing…</li>
+    </ul>
+  </section>
+
+  <section class="panel" aria-labelledby="h-telemetry">
+    <h2 id="h-telemetry">Telemetry</h2>
+    <dl class="kv wide">
+      <div><dt>samples sent</dt><dd id="samplesSent" class="num">0</dd></div>
+      <div><dt>batches sent</dt><dd id="batchesSent" class="num">0</dd></div>
+      <div><dt>queued</dt><dd id="queueDepth" class="num">0</dd></div>
+      <div><dt>dropped</dt><dd id="droppedCount" class="num">0</dd></div>
+    </dl>
+
+    <dl class="kv">
+      <div><dt>battery</dt><dd id="batteryStatus">—</dd></div>
+      <div><dt>network</dt><dd id="networkStatus">—</dd></div>
+    </dl>
+
+    <h3>Latest sensor frame</h3>
+    <table class="live">
+      <thead><tr><th>channel</th><th>x</th><th>y</th><th>z</th></tr></thead>
+      <tbody>
+        <tr><th>accel m/s²</th><td id="liveAccel" class="num" colspan="3">— — —</td></tr>
+        <tr><th>gyro rad/s</th><td id="liveGyro" class="num" colspan="3">— — —</td></tr>
+        <tr><th>mag µT</th><td id="liveMag" class="num" colspan="3">— — —</td></tr>
+        <tr><th>env °C / hPa</th><td id="liveEnv" class="num" colspan="3">— / —</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Payload order is fixed: <code>mag[3]</code>,
+      <code>imu[6] = accel xyz + gyro xyz</code>, <code>env[2] = temp °C + pressure hPa</code>.
+      A channel the phone or browser cannot expose is sent as <code>0</code>.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-response">
+    <h2 id="h-response">Last response</h2>
+    <dl class="kv wide">
+      <div><dt>entropy</dt><dd id="lastEntropy" class="num">—</dd></div>
+      <div><dt>poincaré</dt><dd id="lastPoincare" class="num">—</dd></div>
+    </dl>
+    <pre id="lastResponse" class="raw" aria-live="polite">no response yet</pre>
+  </section>
+
+  <section class="panel log-panel" aria-labelledby="h-log">
+    <div class="panel-head">
+      <h2 id="h-log">Event log</h2>
+      <button type="button" id="clearLogBtn" class="btn ghost small">Clear</button>
+    </div>
+    <ol id="eventLog" class="log" role="log" aria-live="polite"></ol>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span>ABRASAX sensor client · zero build · no CDN</span>
+  <span class="foot-sep">/</span>
+  <span>POST <code>/v1/sensors/ingest</code> · <code>/v1/sensors/batch</code> · GET <code>/v1/sensors/state</code></span>
+</footer>
+
+<script src="sensors.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+# ABRASAX gateway chat (static UI)
+
+Single-page chat client for the ABRASAX gateway on `127.0.0.1:9001`. Plain HTML/CSS/JS —
+no build step, no framework, no CDN, no network access needed beyond the gateway itself.
+
+## Serve it
+
+```bat
+cd C:\ABRASAX\UI\abrasax-ui\web
+C:\ABRASAX\PYTHON\.venv_gui\Scripts\python.exe -m http.server 8090 --bind 127.0.0.1
+```
+
+Open <http://127.0.0.1:8090/>.
+
+`python -m http.server` from any Python 3 works too; the venv path is the house interpreter.
+The gateway must already be running (`abrasax gateway`, port 9001) for chat and models. If it is
+down the page still loads and shows **gateway offline** in the telemetry strip.
+
+## What it does
+
+| Element | Source |
+|---|---|
+| Model dropdown | `GET /v1/models`, scoped to the pinned route (disabled under `auto`: the router then uses provider defaults) |
+| Route selector | `auto` / `lmstudio` / `nvidia` / `xpl`, sent as `abrasax.route` + a `provider:model` prefix |
+| Chat | `POST /v1/chat/completions`, OpenAI body shape, `stream:false` |
+| Telemetry strip | `GET /health` every 10 s — status, version, service, client-measured latency |
+| Errors | rendered as a red bubble + telemetry detail; never swallowed |
+
+Request body for route `lmstudio` (auto sends no `model`, only `abrasax.route`):
+
+```json
+{
+  "model": "lmstudio:liquid/lfm2.5-1.2b",
+  "messages": [{"role": "user", "content": "hi"}],
+  "max_tokens": 512,
+  "temperature": 0.7,
+  "stream": false,
+  "abrasax": {"route": "lmstudio"}
+}
+```
+
+## Gateway quirks this UI works around
+
+1. **No CORS preflight.** Gateway 0.4.0 has no `OPTIONS` handler (`501`), so a cross-origin
+   `Content-Type: application/json` POST from `:8090` fails preflight. The page therefore posts
+   with `Content-Type: text/plain;charset=UTF-8` (CORS-safelisted → no preflight); the gateway
+   parses the raw body as JSON regardless. Change `POST_CONTENT_TYPE` in `app.js` if you ever
+   serve this page same-origin with the gateway.
+2. **`stream:true` is rejected** with `400 stream=true is not supported yet; use false`, so replies
+   are non-streaming (no fake typing stream — just a thinking bubble until the JSON arrives).
+3. **`/v1/models` can contain non-string ids** (e.g. `"id": true` from the `xpl` alias map). The
+   dropdown drops those and reports how many were skipped in the status line.
+4. **A bare model id is ignored** — `abrasax/gateway.py:79-85` only honours `lmstudio:` /
+   `nvidia:` / `xpl:` prefixes. Picking a model therefore sends `"<route>:<id>"`; under `auto` the
+   dropdown is disabled because the gateway would discard the id and use each provider's default.
+
+## Config
+
+- Gateway URL override: `?gateway=http://127.0.0.1:9002` for that page load only, or edit
+  `DEFAULT_GATEWAY` in `app.js`.
+- Model/route choices persist in `localStorage`.
+- `window.AbrasaXUI.send("…")` / `.pollHealth()` / `.history()` are exposed for smoke tests.
+
+## Files
+
+```
+index.html   markup + telemetry strip
+styles.css   dark theme, responsive
+app.js       models, health poll, chat, error handling
+README.md    this file
+```
+
+`../web/chat/` is the older Flask-proxied chat page (Bootstrap CDN, targets `:9000`); it is left
+untouched and is not required by this UI.

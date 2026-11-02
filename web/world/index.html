@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#050505">
+<title>ABRASAX · WORLD</title>
+<meta name="description" content="ABRASAX Phase 1 world model: sensor nervous system, pose, camera and health">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src http: https:; img-src 'self' data: blob:; media-src 'self' blob:; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23050505'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%2300FF66' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%2300FF66'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="world.css">
+</head>
+<body data-mode="idle" data-health="unknown">
+
+<a class="skip-link" href="#main">Skip to world state</a>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-name">ABRASAX</span>
+    <span class="brand-slash">//</span>
+    <span class="brand-sub">WORLD</span>
+    <span class="brand-phase">PHASE&nbsp;1</span>
+  </div>
+  <div class="topbar-right">
+    <span class="badge" id="modeBadge" data-mode="idle">IDLE</span>
+    <span class="dot" id="connectionDot" data-state="idle" aria-hidden="true"></span>
+    <span class="conn" id="connectionState" role="status" aria-live="polite">not connected</span>
+  </div>
+</header>
+
+<div class="banner critical" id="authBanner" hidden role="alert">
+  <strong>401 unauthorized.</strong> The gateway rejected the request. Enter the
+  gateway token (<code>ABRASAX_GATEWAY_TOKEN</code>) and press Connect. If the
+  gateway has no token configured, leave the field empty. The token stays in
+  <code>sessionStorage</code> and is never logged.
+</div>
+
+<div class="banner warn" id="insecureBanner" hidden role="alert">
+  This page is not a secure context. Android may block motion, magnetometer and
+  camera access over plain <code>http://</code>. Use <code>adb reverse</code>
+  (see below) or the Termux forwarder.
+</div>
+
+<main id="main" class="layout">
+
+  <!-- (a) connection ----------------------------------------------------- -->
+  <section class="panel" id="panel-connection" aria-labelledby="h-connection">
+    <h2 id="h-connection"><span class="idx">a</span> Connection</h2>
+    <p class="hint">The gateway origin, not this page's origin. The UI is served
+      from :8090; samples go to the gateway (:9001 supervised, :9002 LAN).</p>
+
+    <label class="field">
+      <span class="field-label">Gateway base URL</span>
+      <input id="baseUrl" type="url" inputmode="url" spellcheck="false"
+             autocomplete="off" placeholder="http://127.0.0.1:9001"
+             value="http://127.0.0.1:9001">
+    </label>
+
+    <label class="field">
+      <span class="field-label">Gateway token</span>
+      <input id="token" type="password" spellcheck="false" autocomplete="off"
+             placeholder="ABRASAX_GATEWAY_TOKEN (optional)">
+    </label>
+
+    <div class="row">
+      <button type="button" id="connectBtn" class="btn primary">Connect</button>
+      <button type="button" id="disconnectBtn" class="btn ghost" disabled>Disconnect</button>
+      <label class="check inline">
+        <input id="pollToggle" type="checkbox" checked>
+        <span>poll 1&nbsp;s</span>
+      </label>
+    </div>
+
+    <div class="row">
+      <button type="button" id="motionBtn" class="btn">Enable motion</button>
+      <button type="button" id="simulateBtn" class="btn sim">Simulate</button>
+      <button type="button" id="stopSimBtn" class="btn ghost" disabled>Stop simulate</button>
+    </div>
+    <p class="note" id="motionState">motion: not requested · magnetometer: probe on start</p>
+
+    <p class="note">Token is kept in <strong>sessionStorage</strong> only and is
+      sent solely as <code>Authorization: Bearer …</code>. It is never written to
+      localStorage, the URL, or the event log.</p>
+
+    <dl class="kv">
+      <div><dt>last HTTP</dt><dd id="lastHttp" class="num">--</dd></div>
+      <div><dt>last error</dt><dd id="lastError" class="err">--</dd></div>
+    </dl>
+    <p class="note mono" id="endpointNote">GET /v1/world/state · GET /v1/world/health · POST /v1/sensors/batch · POST /v1/camera/frame</p>
+  </section>
+
+  <!-- (b) world state ---------------------------------------------------- -->
+  <section class="panel" id="panel-world" aria-labelledby="h-world">
+    <h2 id="h-world"><span class="idx">b</span> World state</h2>
+    <div class="stats">
+      <div class="stat"><span class="stat-label">events_total</span><span class="stat-value num" id="worldEventsTotal">--</span></div>
+      <div class="stat"><span class="stat-label">rejected</span><span class="stat-value num warn-text" id="worldRejected">--</span></div>
+      <div class="stat"><span class="stat-label">entities</span><span class="stat-value num" id="worldEntities">--</span></div>
+      <div class="stat"><span class="stat-label">history</span><span class="stat-value num" id="worldHistory">--</span></div>
+    </div>
+
+    <h3>by_origin</h3>
+    <ul class="chips" id="worldByOrigin"><li class="pending">--</li></ul>
+    <p class="note">Simulated events are counted separately and are never merged
+      into measured facts.</p>
+
+    <h3>Entities <span class="muted num" id="entityCount"></span></h3>
+    <div class="table-wrap">
+      <table class="table" aria-describedby="entityHint">
+        <thead>
+          <tr><th>entity</th><th>origin</th><th>count</th><th>seq</th><th>quality</th><th>sync</th><th>last seen</th></tr>
+        </thead>
+        <tbody id="entityTable"><tr><td colspan="7" class="pending">no entities</td></tr></tbody>
+      </table>
+    </div>
+    <p class="note" id="entityHint">Last-seen is the gateway's monotonic arrival
+      age, never a wall-clock subtraction across devices.</p>
+  </section>
+
+  <!-- (c) pose ----------------------------------------------------------- -->
+  <section class="panel" id="panel-pose" aria-labelledby="h-pose">
+    <h2 id="h-pose"><span class="idx">c</span> Pose</h2>
+    <p class="hint">Complementary filter output. Every value is <code>null</code>
+      until a usable IMU + magnetometer sample establishes it.</p>
+
+    <div class="stats three">
+      <div class="stat"><span class="stat-label">roll</span><span class="stat-value num" id="poseRoll">--</span><span class="unit">deg</span></div>
+      <div class="stat"><span class="stat-label">pitch</span><span class="stat-value num" id="posePitch">--</span><span class="unit">deg</span></div>
+      <div class="stat"><span class="stat-label">yaw</span><span class="stat-value num" id="poseYaw">--</span><span class="unit">deg</span></div>
+    </div>
+
+    <dl class="kv">
+      <div><dt>status</dt><dd id="poseStatus" class="num">insufficient</dd></div>
+      <div><dt>source</dt><dd id="poseSource" class="num">gateway fusion</dd></div>
+      <div><dt>sync_status</dt><dd id="poseSync" class="num">unsynced</dd></div>
+      <div><dt>position (m)</dt><dd id="posePosition" class="num">--</dd></div>
+      <div><dt>velocity (m/s)</dt><dd id="poseVelocity" class="num">--</dd></div>
+      <div><dt>uncertainty</dt><dd id="poseUncertainty" class="num">--</dd></div>
+      <div><dt>samples / rejected</dt><dd id="poseSamples" class="num">--</dd></div>
+    </dl>
+    <p class="note">Gateway fusion is authoritative when present. With no pose in
+      the gateway snapshot, a local tilt/heading derivation from the latest
+      captured sample is shown and labelled <code>derived</code>. It is never
+      presented as measured fact. No SLAM, no GPS, no altitude solver.</p>
+  </section>
+
+  <!-- (d) sensors + camera state ----------------------------------------- -->
+  <section class="panel" id="panel-sensors" aria-labelledby="h-sensors">
+    <h2 id="h-sensors"><span class="idx">d</span> Sensors &amp; camera state</h2>
+
+    <dl class="kv">
+      <div><dt>sensor freshness</dt><dd id="freshnessAge" class="num">--</dd></div>
+      <div><dt>freshness source</dt><dd id="freshnessSource" class="num">--</dd></div>
+      <div><dt>uploaded samples</dt><dd id="sensorSamplesSent" class="num">0</dd></div>
+      <div><dt>batches</dt><dd id="sensorBatchesSent" class="num">0</dd></div>
+      <div><dt>queue depth</dt><dd id="sensorQueue" class="num">0</dd></div>
+      <div><dt>capture rate</dt><dd class="num"><input id="captureHz" type="number" min="1" max="30" step="1" value="10" class="inline-input"> Hz</dd></div>
+      <div><dt>batch size</dt><dd class="num"><input id="batchSize" type="number" min="1" max="256" step="1" value="10" class="inline-input"> samples</dd></div>
+    </dl>
+
+    <h3>Availability</h3>
+    <ul id="sensorAvailability" class="availability">
+      <li class="pending">probing…</li>
+    </ul>
+
+    <h3>Camera store</h3>
+    <dl class="kv">
+      <div><dt>state</dt><dd id="cameraState" class="num">--</dd></div>
+      <div><dt>accepted / rejected</dt><dd id="cameraCounts" class="num">--</dd></div>
+      <div><dt>last frame</dt><dd id="cameraLast" class="num">--</dd></div>
+      <div><dt>gateway frames sent</dt><dd id="cameraFrames" class="num">0</dd></div>
+      <div><dt>last camera error</dt><dd id="cameraLastError" class="err">--</dd></div>
+    </dl>
+  </section>
+
+  <!-- (e) camera preview ------------------------------------------------- -->
+  <section class="panel" id="panel-camera" aria-labelledby="h-camera">
+    <h2 id="h-camera"><span class="idx">e</span> Camera preview</h2>
+    <div class="camera-frame">
+      <video id="cameraVideo" playsinline muted autoplay aria-label="Live camera preview"></video>
+      <canvas id="cameraCanvas" class="synthetic" width="640" height="360" aria-label="Synthetic camera placeholder" hidden></canvas>
+      <div class="camera-overlay" id="cameraOverlay" data-mode="off">CAMERA OFF</div>
+    </div>
+
+    <div class="row">
+      <button type="button" id="cameraStartBtn" class="btn primary">Start camera</button>
+      <button type="button" id="cameraStopBtn" class="btn ghost" disabled>Stop camera</button>
+      <label class="field inline-field">
+        <span class="field-label">fps</span>
+        <input id="cameraFps" type="number" min="1" max="15" step="1" value="2" class="inline-input">
+      </label>
+    </div>
+    <p class="note" id="cameraSimNote">Frames are JPEG blobs POSTed to
+      <code>/v1/camera/frame</code>. In SIMULATE mode a deterministic synthetic
+      frame is drawn locally and uploaded instead; no camera permission is used.</p>
+  </section>
+
+  <!-- (f) health --------------------------------------------------------- -->
+  <section class="panel wide" id="panel-health" aria-labelledby="h-health">
+    <h2 id="h-health"><span class="idx">f</span> Health</h2>
+    <div class="health-head">
+      <span class="health-pill" id="healthStatus" data-status="unknown">UNKNOWN</span>
+      <span class="muted num" id="healthLast">GET /v1/world/health</span>
+    </div>
+    <ul class="checks" id="healthChecks"><li class="pending">no report yet</li></ul>
+    <h3>Problems</h3>
+    <ul class="problems" id="healthProblems"><li class="pending">none observed</li></ul>
+    <p class="note">Unknown is not ok. The gateway reports
+      <code>ok</code> / <code>degraded</code> / <code>critical</code>; this page
+      never upgrades an unknown check.</p>
+  </section>
+
+  <!-- (g) event log ------------------------------------------------------ -->
+  <section class="panel wide" id="panel-log" aria-labelledby="h-log">
+    <h2 id="h-log"><span class="idx">g</span> Event log</h2>
+    <div class="row">
+      <button type="button" id="clearLogBtn" class="btn ghost small">Clear</button>
+      <span class="muted num" id="logCount"></span>
+    </div>
+    <ol id="eventLog" class="event-log" role="log" aria-live="polite"></ol>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <span>ABRASAX // WORLD // PHASE 1</span>
+  <span class="muted">no CDN · no websockets · session-scoped token</span>
+</footer>
+
+<script src="world.js" defer></script>
+</body>
+</html>

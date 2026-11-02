@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABRASAX 7D AI OS - Web Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --abrasax-bg: #0a0a0f;
+            --abrasax-surface: #12121a;
+            --abrasax-border: #1e1e30;
+            --abrasax-primary: #4f5349;
+            --abrasax-accent: #6c5ce7;
+            --abrasax-text: #c8c8d4;
+            --abrasax-muted: #6a6a7a;
+            --abrasax-user-bg: #1a1a2e;
+            --abrasax-bot-bg: #16162a;
+            --abrasax-success: #00e676;
+            --abrasax-warning: #ffab00;
+            --abrasax-error: #ff5252;
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--abrasax-border) var(--abrasax-bg);
+        }
+
+        body {
+            background-color: var(--abrasax-bg);
+            color: var(--abrasax-text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        /* Header */
+        .app-header {
+            background: linear-gradient(135deg, var(--abrasax-surface) 0%, #0d0d1a 100%);
+            border-bottom: 1px solid var(--abrasax-border);
+            padding: 12px 20px;
+            flex-shrink: 0;
+        }
+
+        .app-header .brand {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        .app-header .brand .hex {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: var(--abrasax-muted);
+            letter-spacing: 1px;
+        }
+
+        .app-header .subtitle {
+            font-size: 0.75rem;
+            color: var(--abrasax-muted);
+            letter-spacing: 1px;
+        }
+
+        /* Status bar */
+        .status-bar {
+            background: var(--abrasax-surface);
+            border-bottom: 1px solid var(--abrasax-border);
+            padding: 6px 20px;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .status-dot.online { background-color: var(--abrasax-success); box-shadow: 0 0 6px var(--abrasax-success); }
+        .status-dot.offline { background-color: var(--abrasax-error); box-shadow: 0 0 6px var(--abrasax-error); }
+        .status-dot.checking { background-color: var(--abrasax-warning); box-shadow: 0 0 6px var(--abrasax-warning); }
+
+        /* Chat messages */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            animation: messageIn 0.3s ease;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--abrasax-user-bg);
+            border: 1px solid var(--abrasax-border);
+            border-bottom-right-radius: 4px;
+            color: #e0e0f0;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: var(--abrasax-bot-bg);
+            border: 1px solid #1a1a35;
+            border-bottom-left-radius: 4px;
+            color: var(--abrasax-text);
+        }
+
+        .message.system {
+            align-self: center;
+            background: transparent;
+            border: none;
+            color: var(--abrasax-muted);
+            font-size: 0.8rem;
+            text-align: center;
+            max-width: 100%;
+        }
+
+        .message .msg-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            opacity: 0.6;
+        }
+
+        .message.bot .msg-label { color: var(--abrasax-accent); }
+        .message.user .msg-label { color: var(--abrasax-primary); }
+
+        .message .msg-time {
+            font-size: 0.6rem;
+            color: var(--abrasax-muted);
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        /* Thinking indicator */
+        .thinking-indicator {
+            align-self: flex-start;
+            background: var(--abrasax-bot-bg);
+            border: 1px solid #1a1a35;
+            border-radius: 12px;
+            border-bottom-left-radius: 4px;
+            padding: 14px 20px;
+            display: none;
+        }
+
+        .thinking-indicator.active {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .thinking-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--abrasax-accent);
+            border-radius: 50%;
+            animation: thinkPulse 1.4s infinite ease-in-out;
+        }
+
+        .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes thinkPulse {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Input area */
+        .input-area {
+            background: var(--abrasax-surface);
+            border-top: 1px solid var(--abrasax-border);
+            padding: 12px 20px;
+            flex-shrink: 0;
+        }
+
+        .input-area .input-group {
+            background: #0d0d18;
+            border: 1px solid var(--abrasax-border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .input-area .input-group:focus-within {
+            border-color: var(--abrasax-accent);
+            box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.15);
+        }
+
+        .input-area textarea {
+            background: transparent !important;
+            border: none !important;
+            color: var(--abrasax-text) !important;
+            resize: none;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            outline: none;
+            box-shadow: none !important;
+        }
+
+        .input-area textarea::placeholder {
+            color: var(--abrasax-muted);
+        }
+
+        .input-area .btn-send {
+            background: transparent;
+            border: none;
+            color: var(--abrasax-accent);
+            padding: 8px 16px;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .input-area .btn-send:hover {
+            color: #8b7cf7;
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .input-area .btn-send:disabled {
+            color: var(--abrasax-muted);
+        }
+
+        /* Intro / empty state */
+        .chat-intro {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--abrasax-muted);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .chat-intro .hex-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            letter-spacing: 4px;
+            color: var(--abrasax-primary);
+            margin-bottom: 16px;
+        }
+
+        .chat-intro h4 {
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .chat-intro p {
+            font-size: 0.85rem;
+            max-width: 400px;
+        }
+
+        .chat-intro .shortcuts {
+            margin-top: 20px;
+            font-size: 0.75rem;
+        }
+
+        .chat-intro .shortcuts kbd {
+            background: var(--abrasax-surface);
+            border: 1px solid var(--abrasax-border);
+            color: var(--abrasax-text);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Welcome message */
+        .welcome-bar {
+            background: linear-gradient(90deg, rgba(108,92,231,0.08) 0%, transparent 100%);
+            border-left: 3px solid var(--abrasax-accent);
+            padding: 8px 16px;
+            margin: 0 20px 8px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.8rem;
+            color: var(--abrasax-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 576px) {
+            .app-header { padding: 10px 14px; }
+            .chat-messages { padding: 12px 14px; }
+            .input-area { padding: 10px 14px; }
+            .message { max-width: 92%; font-size: 0.9rem; }
+        }
+
+        .btn-clear {
+            background: transparent;
+            border: 1px solid var(--abrasax-border);
+            color: var(--abrasax-muted);
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-clear:hover {
+            border-color: var(--abrasax-error);
+            color: var(--abrasax-error);
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Header -->
+    <div class="app-header d-flex justify-content-between align-items-center">
+        <div>
+            <div class="brand">
+                ABRASAX 7D AI OS
+                <span class="hex ms-2">4f5349524953424c58434b</span>
+            </div>
+            <div class="subtitle">Web Chat Interface</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="status-dot checking" id="statusDot"></span>
+            <span id="statusText" style="font-size:0.75rem;color:var(--abrasax-muted)">Checking...</span>
+            <button class="btn-clear ms-2" id="btnClear" title="Clear conversation">Clear</button>
+        </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+        <span id="healthInfo">Connecting to gateway at http://127.0.0.1:9000...</span>
+    </div>
+
+    <!-- Chat messages -->
+    <div class="chat-messages" id="chatMessages">
+        <div class="chat-intro" id="chatIntro">
+            <div class="hex-display">4f5349524953424c58434b</div>
+            <h4>Welcome to ABRASAX</h4>
+            <p>7th Dimensional AI Operating System. Send a message to begin conversing with the gateway.</p>
+            <div class="shortcuts">
+                Press <kbd>Enter</kbd> to send &middot; <kbd>Shift</kbd>+<kbd>Enter</kbd> for new line
+            </div>
+        </div>
+    </div>
+
+    <!-- Thinking indicator -->
+    <div class="thinking-indicator" id="thinkingIndicator">
+        <div class="thinking-dot"></div>
+        <div class="thinking-dot"></div>
+        <div class="thinking-dot"></div>
+    </div>
+
+    <!-- Input area -->
+    <div class="input-area">
+        <form id="chatForm" autocomplete="off">
+            <div class="input-group d-flex align-items-center">
+                <textarea
+                    id="messageInput"
+                    class="form-control"
+                    rows="1"
+                    placeholder="Type a message to ABRASAX..."
+                    aria-label="Chat message"
+                ></textarea>
+                <button type="submit" class="btn-send" id="btnSend" title="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// ============================================================================
+// ABRASAX Web Chat Client
+// Connects to ABRASAX LLM Gateway via the Flask proxy (/api/*)
+// HEX: 4f5349524953424c58434b
+// ============================================================================
+
+const GATEWAY_BASE = '';  // Empty = same origin (Flask proxy handles /api/*)
+let conversationHistory = [];
+let thinking = false;
+
+// DOM elements
+const chatMessages = document.getElementById('chatMessages');
+const chatIntro = document.getElementById('chatIntro');
+const messageInput = document.getElementById('messageInput');
+const chatForm = document.getElementById('chatForm');
+const btnSend = document.getElementById('btnSend');
+const btnClear = document.getElementById('btnClear');
+const thinkingIndicator = document.getElementById('thinkingIndicator');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const healthInfo = document.getElementById('healthInfo');
+
+// ---------------------------------------------------------------------------
+// Utility
+// ---------------------------------------------------------------------------
+function getTimestamp() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function scrollToBottom() {
+    setTimeout(() => {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 50);
+}
+
+// ---------------------------------------------------------------------------
+// Message rendering
+// ---------------------------------------------------------------------------
+function addMessage(role, content) {
+    // Hide intro
+    chatIntro.style.display = 'none';
+
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+
+    const label = role === 'user' ? 'You' : 'ABRASAX';
+    div.innerHTML = `
+        <div class="msg-label">${label}</div>
+        <div class="msg-content">${escapeHtml(content)}</div>
+        <div class="msg-time">${getTimestamp()}</div>
+    `;
+
+    chatMessages.appendChild(div);
+    scrollToBottom();
+    return div;
+}
+
+function addSystemMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'message system';
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    scrollToBottom();
+}
+
+// ---------------------------------------------------------------------------
+// Set thinking state
+// ---------------------------------------------------------------------------
+function setThinking(state) {
+    thinking = state;
+    btnSend.disabled = state;
+    messageInput.disabled = state;
+
+    if (state) {
+        thinkingIndicator.classList.add('active');
+    } else {
+        thinkingIndicator.classList.remove('active');
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Send message to gateway
+// ---------------------------------------------------------------------------
+async function sendMessage(text) {
+    if (!text.trim() || thinking) return;
+
+    const message = text.trim();
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+
+    // Add user message to UI
+    addMessage('user', message);
+    conversationHistory.push({ role: 'user', content: message });
+
+    setThinking(true);
+
+    try {
+        const response = await fetch(`${GATEWAY_BASE}/api/chat`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                source: 'web_chat',
+                history: conversationHistory.slice(-20), // last 20 messages for context
+            }),
+        });
+
+        if (!response.ok) {
+            const errText = await response.text().catch(() => 'Unknown error');
+            throw new Error(`Gateway returned ${response.status}: ${errText}`);
+        }
+
+        const data = await response.json();
+
+        let reply = '';
+        if (data.content) {
+            reply = data.content;
+        } else if (data.response) {
+            reply = data.response;
+        } else if (data.message) {
+            reply = data.message;
+        } else if (typeof data === 'string') {
+            reply = data;
+        } else {
+            reply = JSON.stringify(data, null, 2);
+        }
+
+        // Add bot response to UI
+        addMessage('bot', reply);
+        conversationHistory.push({ role: 'assistant', content: reply });
+
+    } catch (err) {
+        addSystemMessage(`[Error] ${err.message}`);
+        console.error('Chat error:', err);
+    } finally {
+        setThinking(false);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Health check
+// ---------------------------------------------------------------------------
+async function checkHealth() {
+    try {
+        statusDot.className = 'status-dot checking';
+        statusText.textContent = 'Checking...';
+
+        const response = await fetch(`${GATEWAY_BASE}/api/health`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        statusDot.className = 'status-dot online';
+        statusText.textContent = 'Online';
+
+        let info = `Gateway: ONLINE | `;
+        if (typeof data === 'object') {
+            const parts = [];
+            for (const [k, v] of Object.entries(data)) {
+                if (typeof v !== 'object') {
+                    parts.push(`${k}: ${v}`);
+                }
+            }
+            info += parts.join(' | ') || 'All systems nominal';
+        }
+        healthInfo.textContent = info;
+        healthInfo.style.color = 'var(--abrasax-success)';
+    } catch (err) {
+        statusDot.className = 'status-dot offline';
+        statusText.textContent = 'Offline';
+        healthInfo.textContent = `Gateway unreachable: ${err.message}`;
+        healthInfo.style.color = 'var(--abrasax-error)';
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Event handlers
+// ---------------------------------------------------------------------------
+
+// Form submit
+chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    sendMessage(messageInput.value);
+});
+
+// Auto-resize textarea
+messageInput.addEventListener('input', () => {
+    messageInput.style.height = 'auto';
+    messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
+});
+
+// Enter to send, Shift+Enter for newline
+messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.dispatchEvent(new Event('submit'));
+    }
+});
+
+// Clear conversation
+btnClear.addEventListener('click', () => {
+    if (conversationHistory.length === 0) return;
+    if (!confirm('Clear conversation history?')) return;
+
+    conversationHistory = [];
+    chatMessages.querySelectorAll('.message').forEach(el => el.remove());
+    chatIntro.style.display = 'flex';
+    messageInput.focus();
+});
+
+// Keyboard shortcut: Ctrl+L to clear
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'l') {
+        e.preventDefault();
+        btnClear.click();
+    }
+});
+
+// Focus input on load
+messageInput.focus();
+
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
+checkHealth();
+setInterval(checkHealth, 15000);  // Check health every 15 seconds
+
+// Add welcome message
+addSystemMessage(`ABRASAX 7D AI OS Chat initialized at ${getTimestamp()}. Gateway: http://127.0.0.1:9000`);
+
+console.log('%c ABRASAX 7D AI OS ',
+    'background:#0a0a0f;color:#6c5ce7;font-size:16px;font-weight:bold;padding:8px 16px;border-radius:4px;');
+console.log('%c HEX: 4f5349524953424c58434b | PHI: 1.618033988749895 ',
+    'color:#4f5349;font-size:12px;');
+</script>
+
+<!-- ===================== ABRASAX payload panel ===================== -->
+<style>
+#abxPayloadBtn{position:fixed;right:16px;bottom:16px;z-index:9998;
+  background:#0a0a0f;color:#6c5ce7;border:1px solid #6c5ce7;border-radius:6px;
+  padding:8px 14px;font:600 12px/1 ui-monospace,monospace;letter-spacing:.08em;
+  cursor:pointer}
+#abxPayloadBtn:hover{background:#6c5ce7;color:#0a0a0f}
+#abrasax-payload-panel{position:fixed;right:16px;bottom:60px;width:min(520px,92vw);
+  max-height:70vh;overflow:auto;z-index:9999;background:#0a0a0f;color:#d8d8e8;
+  border:1px solid #6c5ce7;border-radius:8px;padding:14px;display:none;
+  font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;
+  box-shadow:0 12px 40px rgba(0,0,0,.7)}
+#abrasax-payload-panel.open{display:block}
+#abrasax-payload-panel h3{margin:0 0 10px;font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:#6c5ce7}
+#abrasax-payload-panel .row{display:flex;justify-content:space-between;
+  border-bottom:1px solid #1b1b26;padding:3px 0}
+#abrasax-payload-panel .k{color:#7a7a90}
+#abrasax-payload-panel .v{color:#e8e8f8}
+#abrasax-payload-panel .ok{color:#26d07c}
+#abrasax-payload-panel .bad{color:#ff5d5d}
+#abrasax-payload-panel .sect{margin:12px 0 4px;color:#6c5ce7;
+  letter-spacing:.1em;text-transform:uppercase;font-size:10px}
+#abrasax-payload-panel pre{white-space:pre-wrap;margin:6px 0;color:#9a9ab0}
+#abxClose{float:right;cursor:pointer;color:#7a7a90}
+</style>
+
+<button id="abxPayloadBtn" title="FL Studio payload analysis">PAYLOAD</button>
+<div id="abrasax-payload-panel" aria-label="FL Studio payload analysis">
+  <span id="abxClose">[x]</span>
+  <h3>Payload analysis</h3>
+  <div id="abxBody"><pre>loading…</pre></div>
+</div>
+
+<script>
+(function () {
+  const btn = document.getElementById('abxPayloadBtn');
+  const panel = document.getElementById('abrasax-payload-panel');
+  const body = document.getElementById('abxBody');
+  let loaded = false;
+
+  function row(k, v, cls) {
+    return '<div class="row"><span class="k">' + k + '</span>' +
+           '<span class="v' + (cls ? ' ' + cls : '') + '">' + v + '</span></div>';
+  }
+  function sect(t) { return '<div class="sect">' + t + '</div>'; }
+
+  function render(d) {
+    if (!d.ok) {
+      body.innerHTML = sect('error') + '<pre>' + (d.error || 'unknown') + '</pre>';
+      return;
+    }
+    let h = sect('archive');
+    h += row('file size', d.file_size.toLocaleString());
+    h += row('archive size', d.archive_size.toLocaleString());
+    h += row('walk exact', d.archive_exact ? 'yes' : 'no', d.archive_exact ? 'ok' : 'bad');
+    h += row('members', d.members);
+    h += row('payload bytes', d.payload_bytes.toLocaleString());
+    h += row('tail non-zero', d.tail_nonzero,
+             d.tail_nonzero === 0 ? 'ok' : 'bad');
+
+    const u = d.unsigned_component;
+    if (u) {
+      h += sect('unsigned component: ' + u.name);
+      h += row('size', u.size.toLocaleString());
+      (u.slices || []).forEach(function (s) {
+        h += row(s.arch + ' slice', s.size.toLocaleString() +
+                 ' · non-zero ' + s.nonzero.toLocaleString(),
+                 s.nonzero === 0 ? 'bad' : '');
+      });
+      if (u.slots) {
+        h += row('CodeDirectory', u.slots['0x0'] !== undefined ? u.slots['0x0'].toLocaleString() : '-');
+        h += row('Requirements', (u.slots['0x2'] || 0) ? 'present' : 'empty',
+                 (u.slots['0x2'] || 0) ? '' : 'bad');
+        h += row('Entitlements', (u.slots['0x1000'] || 0) ? 'present' : 'empty',
+                 (u.slots['0x1000'] || 0) ? '' : 'bad');
+        h += row('CMS signature', u.cms_present ? 'present' : 'ABSENT',
+                 u.cms_present ? 'ok' : 'bad');
+      }
+      if (u.pages) {
+        h += row('page hashes good', u.pages.good.toLocaleString(), 'ok');
+        h += row('page hashes bad', u.pages.bad.toLocaleString(), 'bad');
+        if (u.pages.first_bad_offset !== null && u.pages.first_bad_offset !== undefined) {
+          h += row('divergence at', '0x' + u.pages.first_bad_offset.toString(16).toUpperCase(), 'bad');
+        }
+      }
+    }
+
+    if (d.manifest) {
+      h += sect('manifest');
+      h += row('sealed entries', d.manifest.sealed);
+      h += row('symlinks', d.manifest.symlinks);
+      if (d.manifest.audit) {
+        const a = d.manifest.audit;
+        h += row('match', a.match.length, 'ok');
+        h += row('fail', a.fail.length, a.fail.length ? 'bad' : '');
+        h += row('absent', a.absent.length, a.absent.length ? 'bad' : '');
+      }
+    }
+    h += sect('hex');
+    h += '<pre>' + (d.hex || '') + '</pre>';
+    body.innerHTML = h;
+  }
+
+  function load() {
+    body.innerHTML = '<pre>loading…</pre>';
+    fetch('/api/payload')
+      .then(function (r) { return r.json(); })
+      .then(render)
+      .catch(function (e) { body.innerHTML = sect('error') + '<pre>' + e + '</pre>'; });
+  }
+
+  btn.addEventListener('click', function () {
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open') && !loaded) { loaded = true; load(); }
+  });
+  document.getElementById('abxClose').addEventListener('click', function () {
+    panel.classList.remove('open');
+  });
+})();
+</script>
+<!-- =================== end ABRASAX payload panel =================== -->
+
+
+<!-- ===================== ABRASAX brain render ===================== -->
+<style>
+#abxBrainBtn{position:fixed;right:16px;bottom:60px;z-index:9998;
+  background:#0a0a0f;color:#00e5c0;border:1px solid #00e5c0;border-radius:6px;
+  padding:8px 14px;font:600 12px/1 ui-monospace,monospace;letter-spacing:.08em;
+  cursor:pointer}
+#abxBrainBtn:hover{background:#00e5c0;color:#0a0a0f}
+#abxBrainPanel{position:fixed;right:96px;bottom:60px;width:min(680px,94vw);
+  z-index:9999;background:#04040a;border:1px solid #00e5c0;border-radius:8px;
+  padding:12px;display:none;box-shadow:0 12px 48px rgba(0,229,192,.18),
+  0 12px 48px rgba(0,0,0,.8);font:11px/1.5 ui-monospace,Consolas,monospace;
+  color:#c8fff4}
+#abxBrainPanel.open{display:block}
+#abxBrainPanel h3{margin:0 0 8px;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:#00e5c0}
+#abxBrainClose{float:right;cursor:pointer;color:#4a7a72}
+#abxBrainCanvas{display:block;width:100%;height:auto;background:#02020a;
+  border-radius:4px;border:1px solid #0d2a26}
+#abxBrainStats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 10px;
+  margin-top:8px}
+#abxBrainStats div{display:flex;justify-content:space-between;
+  border-bottom:1px solid #0d2a26;padding:2px 0}
+#abxBrainStats .k{color:#4a7a72}
+#abxBrainStats .v{color:#c8fff4}
+.helix-tag{color:#ff2e88}
+#abxBrainWarn{margin-top:8px;padding:6px 8px;border-radius:4px;
+  border:1px solid #7a4a00;background:rgba(255,170,0,.10);color:#ffb84d;
+  font-size:10px;line-height:1.5;display:none}
+#abxBrainWarn.on{display:block}
+#abxBrainWarn b{color:#ffd08a}
+</style>
+
+<button id="abxBrainBtn" title="Synaptic field render">BRAIN</button>
+<div id="abxBrainPanel" aria-label="Quantum DNA brain render">
+  <span id="abxBrainClose">[x]</span>
+  <h3>Synaptic field &middot; <span class="helix-tag">quantum DNA helix</span></h3>
+  <canvas id="abxBrainCanvas" width="960" height="420"></canvas>
+  <div id="abxBrainStats"></div>
+  <div id="abxBrainWarn"></div>
+</div>
+
+<script>
+(function () {
+  const btn = document.getElementById('abxBrainBtn');
+  const panel = document.getElementById('abxBrainPanel');
+  const canvas = document.getElementById('abxBrainCanvas');
+  const ctx = canvas.getContext('2d');
+  const stats = document.getElementById('abxBrainStats');
+
+  const PHI = 1.618033988749895;
+  let field = null;          // {size, data:Uint8Array}
+  let state = null;
+  let activity = null;
+  let running = false;
+  let t0 = performance.now();
+
+  const COLS = 12;           // base pairs across the helix
+  const ROWS = 34;           // rungs along the axis
+
+  function b64ToU8(b64) {
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  function sample(x, y) {
+    if (!field) return 0;
+    const s = field.size;
+    const px = Math.min(s - 1, Math.max(0, Math.floor(x * s)));
+    const py = Math.min(s - 1, Math.max(0, Math.floor(y * s)));
+    return field.data[py * s + px] / 255;
+  }
+
+  // ---- field analysis: gradient + anisotropy, computed client-side ----
+  let aniso = 0;
+
+  function measureAnisotropy() {
+    if (!field) return 0;
+    const s = field.size, d = field.data;
+    let hSum = 0, vSum = 0, n = 0;
+    for (let r = 0; r < s - 1; r += 2) {
+      for (let c = 0; c < s - 1; c += 2) {
+        const v = d[r * s + c];
+        hSum += Math.abs(v - d[r * s + c + 1]);
+        vSum += Math.abs(v - d[(r + 1) * s + c]);
+        n++;
+      }
+    }
+    const h = hSum / n, v = vSum / n;
+    return h + v > 0 ? v / (h + v) : 0.5;   // 0.5 = isotropic
+  }
+
+  function gradient(x, y) {
+    // central difference on the normalised field -> local flow direction
+    const e = 1 / field.size;
+    const gx = sample(x + e, y) - sample(x - e, y);
+    const gy = sample(x, y + e) - sample(x, y - e);
+    return { gx, gy };
+  }
+
+  function drawFieldSubstrate(w, h) {
+    if (!field) return;
+    const s = field.size;
+    const cell = Math.max(2, Math.floor(Math.min(w, h) / s));
+    const ox = (w - cell * s) / 2, oy = (h - cell * s) / 2;
+    for (let r = 0; r < s; r++) {
+      for (let c = 0; c < s; c++) {
+        const v = field.data[r * s + c];
+        if (v < 24) continue;                       // skip near-zero: keeps it sparse
+        const a = (v / 255) * 0.18;
+        ctx.fillStyle = v > 200
+          ? 'rgba(255,46,136,' + a.toFixed(3) + ')'
+          : 'rgba(0,229,192,' + a.toFixed(3) + ')';
+        ctx.fillRect(ox + c * cell, oy + r * cell, cell - 1, cell - 1);
+      }
+    }
+  }
+
+  function draw(now) {
+    if (!running) return;
+    const w = canvas.width, h = canvas.height;
+    const t = (now - t0) / 1000;
+
+    ctx.fillStyle = 'rgba(2,2,10,0.26)';
+    ctx.fillRect(0, 0, w, h);
+
+    drawFieldSubstrate(w, h);
+
+    const cx = w * 0.5;
+    const amp = h * 0.20 * (0.6 + aniso * 0.8);
+    const stride = h / (ROWS + 8);
+    const glow = state && state.mean_state ? state.mean_state : 0.9;
+
+    const pts = [];
+    for (let r = 0; r < ROWS; r++) {
+      const u = r / (ROWS - 1);
+      const y = h * 0.5 + (u - 0.5) * (h - 2 * stride);
+      const phase = u * Math.PI * 2 * 3 + t * 0.6;
+
+      // helix twist, bent by the field's local gradient
+      let twist = Math.sin(phase) * amp;
+      if (field) {
+        const g = gradient(u, (Math.sin(phase) + 1) / 2);
+        twist += g.gx * amp * 1.6;
+      }
+      pts.push({ u, y, phase, twist });
+    }
+
+    for (const p of pts) {
+      const dens = Math.max(sample(p.u, 0.15), sample(p.u, 0.85));
+      const x1 = cx + p.twist;
+      const x2 = cx - p.twist;
+      p.x1 = x1; p.x2 = x2;
+
+      const alpha = 0.10 + dens * 0.55 * glow;
+      ctx.strokeStyle = 'rgba(0,229,192,' + alpha.toFixed(3) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x1, p.y); ctx.lineTo(x2, p.y); ctx.stroke();
+
+      const rad = 1.3 + dens * 2.4;
+      ctx.fillStyle = dens > 0.55 ? '#ff2e88' : '#00e5c0';
+      ctx.beginPath(); ctx.arc(x1, p.y, rad, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = dens > 0.55 ? '#00e5c0' : '#ff2e88';
+      ctx.beginPath(); ctx.arc(x2, p.y, rad, 0, Math.PI * 2); ctx.fill();
+    }
+
+    for (const key of ['x1', 'x2']) {
+      ctx.beginPath();
+      pts.forEach(function (p, i) {
+        if (i === 0) ctx.moveTo(p[key], p.y); else ctx.lineTo(p[key], p.y);
+      });
+      ctx.strokeStyle = 'rgba(0,229,192,0.85)';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+
+    if (activity && activity.state === 'running') {
+      const n = 5;
+      for (let i = 0; i < n; i++) {
+        const u = ((t * 0.22 + i / n) % 1);
+        const p = pts[Math.floor(u * (ROWS - 1))];
+        if (!p) continue;
+        const g = ctx.createRadialGradient(p.x1, p.y, 0, p.x1, p.y, 22);
+        g.addColorStop(0, 'rgba(255,46,136,0.85)');
+        g.addColorStop(1, 'rgba(255,46,136,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(p.x1, p.y, 22, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    ctx.fillStyle = 'rgba(74,122,114,0.9)';
+    ctx.font = '10px ui-monospace,monospace';
+    ctx.fillText('PHI ' + PHI.toFixed(6) + '   aniso ' + aniso.toFixed(3), 8, h - 8);
+
+    requestAnimationFrame(draw);
+  }
+
+  function renderStats() {
+    const warn = document.getElementById('abxBrainWarn');
+    if (!state) { stats.innerHTML = ''; if (warn) warn.classList.remove('on'); return; }
+    if (warn && typeof state.mean_state === 'number') {
+      const m = state.mean_state;
+      const thr = (state.theta && state.theta.threshold) || 0.5;
+      const margin = m - thr;
+      if (margin > 0.3) {
+        const sc = (state.theta && state.theta.scale) || 1.0;
+        warn.innerHTML = '<b>field saturated</b> &mdash; mean_state ' + m.toFixed(4) +
+          ' vs threshold ' + thr.toFixed(2) + ' (margin +' + margin.toFixed(3) +
+          ').<br>Root cause: <b>theta.scale = ' + sc.toFixed(2) +
+          '</b> &mdash; currents are ~8x past tanh saturation. ' +
+          'Verified fix: <b>scale 0.10</b> (std 0.049 &rarr; 0.129, latch 99.4% &rarr; 34%). ' +
+          'See DOC/REPORTS/BRAIN-SATURATION.md';
+        warn.classList.add('on');
+      } else {
+        warn.classList.remove('on');
+      }
+    }
+    const s = state.synapses || {};
+    const rows = [
+      ['nodes', (state.nodes || 0).toLocaleString()],
+      ['steps', (state.steps || 0).toLocaleString()],
+      ['edges', (s.edges || 0).toLocaleString()],
+      ['out-deg', (s.mean_out_degree || 0).toFixed(2)],
+      ['recip', ((s.reciprocal_directed_frac || 0) * 100).toFixed(1) + '%'],
+      ['inhib', ((s.inhibitory_edge_frac || 0) * 100).toFixed(1) + '%'],
+      ['w-mean', (s.weight_mean || 0).toFixed(3)],
+      ['phi-gain', (s.mag_reciprocal_gain || PHI).toFixed(6)],
+    ];
+    stats.innerHTML = rows.map(function (r) {
+      return '<div><span class="k">' + r[0] + '</span><span class="v">' + r[1] + '</span></div>';
+    }).join('');
+  }
+
+  async function load() {
+    try {
+      const [st, tx, ac] = await Promise.all([
+        fetch('/api/brain/state').then(function (r) { return r.json(); }),
+        fetch('/api/brain/texture').then(function (r) { return r.json(); }),
+        fetch('/api/brain/activity').then(function (r) { return r.json(); }).catch(function () { return null; }),
+      ]);
+      if (st && st.nodes) {
+        state = st;
+        activity = ac;
+        if (tx && tx.data) {
+          field = { size: tx.size, data: b64ToU8(tx.data) };
+          aniso = measureAnisotropy();
+        }
+        renderStats();
+      }
+    } catch (e) { /* brain offline: renderer keeps its idle helix */ }
+  }
+
+  btn.addEventListener('click', function () {
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) {
+      if (!running) { running = true; requestAnimationFrame(draw); }
+      load();
+      setIntervalSafe();
+    }
+  });
+  document.getElementById('abxBrainClose').addEventListener('click', function () {
+    panel.classList.remove('open');
+  });
+
+  let timer = null;
+  function setIntervalSafe() {
+    if (timer) return;
+    timer = setInterval(function () {
+      if (panel.classList.contains('open')) load();
+    }, 4000);
+  }
+})();
+</script>
+<!-- =================== end ABRASAX brain render =================== -->
+
+</body>
+</html>
