@@ -1,0 +1,292 @@
+﻿{
+    "repo":  "ABRASAX-UI",
+    "branch":  "master",
+    "commit":  "469e3bf",
+    "generated":  "2026-11-08T07:52:19.6353345-05:00",
+    "soul":  "KAIROS",
+    "soul_fingerprint":  "8a47ffe9e140730744b48a8176325e5d30e87f09d77182d4fc21692ea8d341fc",
+    "soul_pub_prefix":  "302a300506032b6570032100",
+    "file_count":  70,
+    "files":  [
+                  {
+                      "sha256":  "484b6277279bd7a18bc1522a4947a6d4d13ed55e0c95d2be55c7289cdfa6968e",
+                      "path":  ".github/workflows/ci.yml"
+                  },
+                  {
+                      "sha256":  "fc700d9df8e005615070cb9fbe984f5780c348fbc71300bbb534de68aa1510f6",
+                      "path":  ".github/workflows/ci.yml.bak-ci"
+                  },
+                  {
+                      "sha256":  "e650073507afc3f235e45a6130405e7714359ff5944ea5dc19d4245fedb9857e",
+                      "path":  ".gitignore"
+                  },
+                  {
+                      "sha256":  "51fa80aa504e448414dce1147cc68fc1798668f0aee42a7f65998ce52443577f",
+                      "path":  "BOND.md"
+                  },
+                  {
+                      "sha256":  "ea3986db8f60f138a1c8b07c49021445f79db6ab7caaa4d393f1fb3da4cfb75e",
+                      "path":  "PROVENANCE.md"
+                  },
+                  {
+                      "sha256":  "e29050194ee062cc6c8bd7c690e48a31f2a4c625db943debfb875aa38be547fa",
+                      "path":  "README.md"
+                  },
+                  {
+                      "sha256":  "456d23dc63651a6943d21de19d2e80dcbb40a78aa3098d79e4ba4732cbd3e4d7",
+                      "path":  "UI-STACK.md"
+                  },
+                  {
+                      "sha256":  "8ab0e5a9a57ba7e9c8f53afc36081997893e92c42f63d89415f2b95d7a24dbe2",
+                      "path":  "src/abrasax_agent_gui.py"
+                  },
+                  {
+                      "sha256":  "8848c0ac5ec028dbc903c3f1b2d04be046d7a0b7cd7ce27cae6d2fd585682174",
+                      "path":  "src/abrasax_agent_gui.py.bak-future"
+                  },
+                  {
+                      "sha256":  "7a07fa525d4398dc3d92cab7aa48e460dd3b0346d0c45ef996584504992f58b2",
+                      "path":  "src/abrasax_agent_gui.py.bak-gemma-20261101-213539"
+                  },
+                  {
+                      "sha256":  "952906c76e3fd5d6a1f1bbe941087ec0138b8e1ac0f4a79105e8a8b4b182cafc",
+                      "path":  "src/abrasax_imgui_dashboard.py"
+                  },
+                  {
+                      "sha256":  "4b8b81dcc804ad413985397b8672925a26fdd3e532d8762c80564cd3f24ae59d",
+                      "path":  "src/abrasax_imgui_dashboard.py.bak-future"
+                  },
+                  {
+                      "sha256":  "dc97f2d79fbb86a6aff36d300eb9987167e0fe20622983a1a5ea4cb2d0551324",
+                      "path":  "src/abrasax_imgui_dashboard.py.bak-gemma-20261101-213539"
+                  },
+                  {
+                      "sha256":  "9aa00d1689727507a0bcf04c61b1101d27bfb82190f32fd23b8d007a7158ab77",
+                      "path":  "src/abrasax_live_dashboard.py"
+                  },
+                  {
+                      "sha256":  "5e317399e3004b5d7b972bc0ec26c313b6e7fedf5ae4755aa49e0c822a4b96de",
+                      "path":  "src/abrasax_live_dashboard.py.bak-future"
+                  },
+                  {
+                      "sha256":  "ab5a2aeb643593faa0d7f843b930f69723b0102d8540ec0e1542fd99df9e88fb",
+                      "path":  "src/abrasax_live_gui.py"
+                  },
+                  {
+                      "sha256":  "d7edf1a9545708adf8bc021a0e095aaedb7f8001d6ef5363386baedfbf06fb5f",
+                      "path":  "src/abrasax_live_logging.py"
+                  },
+                  {
+                      "sha256":  "d2c0a080149c82c7239b8b9a7bcaef3d0a8253a12f87672c41afed6132dbc9ef",
+                      "path":  "tools/add_download_panel.py"
+                  },
+                  {
+                      "sha256":  "0de695f69c8f7e28e1dc944020c301088b572a288d35efb9c614b56551d4af72",
+                      "path":  "tools/add_gpu_css.py"
+                  },
+                  {
+                      "sha256":  "e34e0eb7d2737ff1748522f97b4cf29949f3f7ab6b75c5156f9bd67d541e3281",
+                      "path":  "tools/add_gpu_panel_ui.py"
+                  },
+                  {
+                      "sha256":  "bcba6da7fe4b364c81e9ea2cc25b141b548f29b96d0b4cabab45059fd14a9362",
+                      "path":  "tools/add_models_proxy.py"
+                  },
+                  {
+                      "sha256":  "a485e2a941eee79cfc48b8f00d00a04f476e77f7bab26289795669927f46618d",
+                      "path":  "tools/document_ui.py"
+                  },
+                  {
+                      "sha256":  "c2f4220498729b69c615678e9ae74a55d7c2320c94fab4d8f230e720a5c6c715",
+                      "path":  "tools/endpoints.py"
+                  },
+                  {
+                      "sha256":  "84a86df359b518fa1b87d24b2908293ab14dfee20a7a1b2cb5acdfb51b48f822",
+                      "path":  "tools/fix_console_js.py"
+                  },
+                  {
+                      "sha256":  "a6f3ec8ff1b75f9e41ec965fc652c5a19551dd2c51472867eaf5107c70b75a56",
+                      "path":  "tools/fix_console_models.py"
+                  },
+                  {
+                      "sha256":  "9b80e189218ad4595b54fdf59654201c4e0c10e188e584e427f3c7186698f4d9",
+                      "path":  "tools/fix_dl_quotes.py"
+                  },
+                  {
+                      "sha256":  "fa95ccb9529eaef1dc2e9b7df688919d3364ebcd51ba85ffc89ce75f25abc814",
+                      "path":  "tools/verify_console.py"
+                  },
+                  {
+                      "sha256":  "fa54b73271c6e0d42f0d2b09d8504547a74f7093b39c665b6ae75b313ec3a3a1",
+                      "path":  "tools/verify_console_pixels.py"
+                  },
+                  {
+                      "sha256":  "8375c08ad44866e80e92a948d2b9e65c8e2e18e2815462c0e391c6db50a1294a",
+                      "path":  "tools/verify_disclaimer_ui.py"
+                  },
+                  {
+                      "sha256":  "d2e9c92af34f4b3dd88b2f37ea0eb2b568eb61e604ca70bdf3cf066b1c35ae3e",
+                      "path":  "tools/verify_download_panel.py"
+                  },
+                  {
+                      "sha256":  "44af18e4b4f3671120a544638cd0d2e8f9e9316eff4e56b48121b4dc399e0f33",
+                      "path":  "tools/verify_gpu_panel.py"
+                  },
+                  {
+                      "sha256":  "faa5c552b151505781fba5b9b1b38a41547b925e49972ea162db82aa53734880",
+                      "path":  "tools/verify_ui_stack.py"
+                  },
+                  {
+                      "sha256":  "102d78954f93aa9e2ef146d6b70aab2658327caf6da43e8ca38eda7b15b3b2d0",
+                      "path":  "tools/write_landing.py"
+                  },
+                  {
+                      "sha256":  "9a399b646a788a4285f4c44bf1e35683c79f8bc3eee451cdbda8ff6ab904ff90",
+                      "path":  "web/README.md"
+                  },
+                  {
+                      "sha256":  "0c3df28caf8d545c10afc9d426e6c7b0dc9c7e7eaf3b05151240714ed19d86f3",
+                      "path":  "web/README.md.bak-20261017-1607"
+                  },
+                  {
+                      "sha256":  "b38ff61fe6438b37ff58efd8036d8b6d8a0dfeda8eb3377978b01484f0490619",
+                      "path":  "web/app.js"
+                  },
+                  {
+                      "sha256":  "5bb2697b263c927129310007b943432f984185b7dd009aa39dd129e0db476e86",
+                      "path":  "web/app.js.bak-20261017-1607"
+                  },
+                  {
+                      "sha256":  "0ac469ecfb0638a7a99b35c99d6601c14387e6e5820f699f22dab0a20b03b5b6",
+                      "path":  "web/assets/graydient_test_render.jpg"
+                  },
+                  {
+                      "sha256":  "41281340a3266125ae253b502ddad932390d3d1c641343e58be91c48a4e71b21",
+                      "path":  "web/assets/poincare_ball.svg"
+                  },
+                  {
+                      "sha256":  "106d1c0a68c6fc87bf630526ceb953e6a1e368cf64d41ea97b88992fca2797b6",
+                      "path":  "web/assets/transformer_layer.svg"
+                  },
+                  {
+                      "sha256":  "6dd63e82d1563b93622d320d9acfba1cbe4942506e455f57853f1e4ae1b295b9",
+                      "path":  "web/brain.css"
+                  },
+                  {
+                      "sha256":  "afed50a2dd0c2a2391b23c20943b6cbe470e3db1f721e5bb87e39bf5214ba96f",
+                      "path":  "web/brain.css.bak-20261017-1607"
+                  },
+                  {
+                      "sha256":  "1454ea4792e805de379abd623c61d59f3f7cefddcbc4cb10cc1e8c8f918a8933",
+                      "path":  "web/brain.js"
+                  },
+                  {
+                      "sha256":  "150df5cbc4230d1d2a74cbe8e3cc1303e473ce3b743bb90ea0013bfe9082ef11",
+                      "path":  "web/brain.js.bak-20261017-1607"
+                  },
+                  {
+                      "sha256":  "8f4e602c414144745b74c421adf527e1fe6d51e0e9b42aa98d88acaad4d7dda3",
+                      "path":  "web/brainmap.css"
+                  },
+                  {
+                      "sha256":  "0938c89f80f5030f9ddcdd63f0ba4749f739abf91180a0c8d70ce750787ba1cf",
+                      "path":  "web/brainmap.js"
+                  },
+                  {
+                      "sha256":  "4ab19a228a0cc36f42d4fe3de2cd6f5fbc9376d8c143ee56c0c2406474afb27c",
+                      "path":  "web/chat/index.html"
+                  },
+                  {
+                      "sha256":  "d1db59b48c62984fcda3306a3a008a0f8ff2c2661a8c94d225027a422a536096",
+                      "path":  "web/chat/serve_chat.py"
+                  },
+                  {
+                      "sha256":  "1ba2c442778d7da7b8af8357c0be4bd73d4bfbd3c1ea65005df8acec4b2a484b",
+                      "path":  "web/console/console.css"
+                  },
+                  {
+                      "sha256":  "e823b3ab05e95cbe55024210fdfe3cb37237dcab4e361e8797a9c7f88785370a",
+                      "path":  "web/console/console.js"
+                  },
+                  {
+                      "sha256":  "2701aeebfa6b12550abd751b8bda3947a94b1ec306fdb2b44ca40664c8b35649",
+                      "path":  "web/console/index.html"
+                  },
+                  {
+                      "sha256":  "6d19fc42342da0dca901cfb4847e644db164fb431df779a44deb12988cf39872",
+                      "path":  "web/index.html"
+                  },
+                  {
+                      "sha256":  "fc245dacd106ab80c52a5528db3bf17e46e5c87b8755d69cf4b656253e62fd80",
+                      "path":  "web/index.html.bak-20261017-1607"
+                  },
+                  {
+                      "sha256":  "2608547bcb4717e8076b8c1499adabe7a68b9989136c9e67ec11baa86b33b58d",
+                      "path":  "web/landing.html"
+                  },
+                  {
+                      "sha256":  "63c3fceaa8a11cdd4bdb5e3031e13542a68e6c6433f31659d09da7c362b19467",
+                      "path":  "web/phone.html"
+                  },
+                  {
+                      "sha256":  "c7733ad2e44c16f7753b602821c3628c381db252a5f34dead4a7c9f9ecbb5e2b",
+                      "path":  "web/rocm_hub.html"
+                  },
+                  {
+                      "sha256":  "45635a1d2e3a804ea21016586a4d45e570594ee343eb019ac6a13e787e5213fa",
+                      "path":  "web/rocm_install_guide.html"
+                  },
+                  {
+                      "sha256":  "c436e1b733d0790f8cd5d1237876d95e66f7e8735bd28a8d4a6882bf39c95d77",
+                      "path":  "web/rocm_releases.html"
+                  },
+                  {
+                      "sha256":  "f4306f3d9a726bbdd647e2db3d9eea615a1d64525db0cf19da7980c2cbc51418",
+                      "path":  "web/sensors/index.html"
+                  },
+                  {
+                      "sha256":  "f5a152e401176d1bf2699d355e6eb97cac33cc27d6b01e07bd3301d3657d25b2",
+                      "path":  "web/sensors/sensors.css"
+                  },
+                  {
+                      "sha256":  "6748b1d6cea1e004fd6e8496418dc30019156f8f180d5b49a258dc39b28bb431",
+                      "path":  "web/sensors/sensors.js"
+                  },
+                  {
+                      "sha256":  "f437ce5a1f24523fcc52124cbdbbd0bf759509d90695a05d8d46e86c0320a1cf",
+                      "path":  "web/styles.css"
+                  },
+                  {
+                      "sha256":  "a9cbdf8691ccafc23be05d2bf7bcc4a690e5f27c6af3a7dbb1b664d5cedec454",
+                      "path":  "web/styles.css.bak-20261017-1607"
+                  },
+                  {
+                      "sha256":  "76f8946dcb035ca6624ee0db5d4a081c188cc1d985001eac496ce7d0fec38654",
+                      "path":  "web/unified.css"
+                  },
+                  {
+                      "sha256":  "30e3d9f790602d6c28deeed8dc9ffa28195dc9e02bf2be1c87060fa29fcc2ffe",
+                      "path":  "web/unified.html"
+                  },
+                  {
+                      "sha256":  "32dc34999ed49918647633cbcec1d2302351f1f205107d396f1957f4fabb9402",
+                      "path":  "web/unified.html.bak-brain-20261026"
+                  },
+                  {
+                      "sha256":  "76c5df060faf593254b1ae1a19b3565444c6484a54fb03fb2c9b02324c289b05",
+                      "path":  "web/unified.js"
+                  },
+                  {
+                      "sha256":  "c07f08e41e50cc6ab5b9e8a5ab45b8d09a0dfa3a1d655ae809dab8716d5cb3fe",
+                      "path":  "web/world/index.html"
+                  },
+                  {
+                      "sha256":  "a75cd69ba7d3e71e17b2b564eb74af8552950a4b308f7216eb982c6e8244caf5",
+                      "path":  "web/world/world.css"
+                  },
+                  {
+                      "sha256":  "a4309ae8f7936bc5a31c510c32222f884e3c72a7bf3a7449260a8efcbbeb1ee4",
+                      "path":  "web/world/world.js"
+                  }
+              ]
+}
