@@ -1,3 +1,5 @@
+﻿<!-- ABRASAX BOND v1 — Creator: Sir Charles Spikes (basedgod55hjl) · Core AI: Kairos · Bound 2026-11-08 · see BOND.md -->
+
 # ABRASAX UI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -94,3 +96,4 @@ pytest tests/test_ui.py -v
 ## License
 
 MIT — Copyright © 2026 Sir Charles Spikes (BASEDGOD)
+
